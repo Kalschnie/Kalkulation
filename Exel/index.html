@@ -23,6 +23,9 @@
                     <button id="export-btn" class="btn btn-info">
                         <i class="fas fa-download"></i> Export
                     </button>
+                    <button id="settings-btn" class="btn btn-secondary">
+                        <i class="fas fa-cog"></i> Einstellungen
+                    </button>
                 </div>
             </div>
         </header>
@@ -908,10 +911,316 @@
         </div>
     </div>
 
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3>Einstellungen</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Settings Navigation -->
+                <div class="settings-nav">
+                    <button class="settings-nav-tab active" data-tab="general">
+                        <i class="fas fa-cog"></i> Allgemein
+                    </button>
+                    <button class="settings-nav-tab" data-tab="formatting">
+                        <i class="fas fa-font"></i> Formatierung
+                    </button>
+                    <button class="settings-nav-tab" data-tab="defaults">
+                        <i class="fas fa-star"></i> Standardwerte
+                    </button>
+                    <button class="settings-nav-tab" data-tab="backup">
+                        <i class="fas fa-shield-alt"></i> Backup
+                    </button>
+                    <button class="settings-nav-tab" data-tab="notifications">
+                        <i class="fas fa-bell"></i> Benachrichtigungen
+                    </button>
+                </div>
+
+                <!-- Settings Content -->
+                <div class="settings-content">
+                    <!-- General Settings -->
+                    <div class="settings-tab-content active" id="general-settings">
+                        <h4>Allgemeine Einstellungen</h4>
+                        
+                        <div class="settings-group">
+                            <label class="settings-label">
+                                <span>Sprache</span>
+                                <select id="setting-language" class="settings-input">
+                                    <option value="de">Deutsch</option>
+                                    <option value="en">English</option>
+                                </select>
+                            </label>
+                        </div>
+
+                        <div class="settings-group">
+                            <label class="settings-label">
+                                <span>Theme</span>
+                                <select id="setting-theme" class="settings-input">
+                                    <option value="light">Hell</option>
+                                    <option value="dark">Dunkel</option>
+                                    <option value="auto">Automatisch</option>
+                                </select>
+                            </label>
+                        </div>
+
+                        <div class="settings-group">
+                            <label class="settings-checkbox">
+                                <input type="checkbox" id="setting-compact-mode">
+                                <span class="checkmark"></span>
+                                Kompakte Ansicht verwenden
+                            </label>
+                        </div>
+
+                        <div class="settings-group">
+                            <label class="settings-checkbox">
+                                <input type="checkbox" id="setting-show-tips" checked>
+                                <span class="checkmark"></span>
+                                Hilfe-Tooltips anzeigen
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Formatting Settings -->
+                    <div class="settings-tab-content" id="formatting-settings">
+                        <h4>Zahlen- und Währungsformatierung</h4>
+                        
+                        <div class="settings-group">
+                            <label class="settings-label">
+                                <span>Währung</span>
+                                <select id="setting-currency" class="settings-input">
+                                    <option value="EUR">EUR (€)</option>
+                                    <option value="USD">USD ($)</option>
+                                    <option value="CHF">CHF (Fr.)</option>
+                                </select>
+                            </label>
+                        </div>
+
+                        <div class="settings-group">
+                            <label class="settings-label">
+                                <span>Dezimalstellen</span>
+                                <select id="setting-decimal-places" class="settings-input">
+                                    <option value="0">0 (1.000 €)</option>
+                                    <option value="2" selected>2 (1.000,00 €)</option>
+                                </select>
+                            </label>
+                        </div>
+
+                        <div class="settings-group">
+                            <label class="settings-label">
+                                <span>Tausendertrennzeichen</span>
+                                <select id="setting-thousands-separator" class="settings-input">
+                                    <option value="." selected>Punkt (1.000,00)</option>
+                                    <option value=",">Komma (1,000.00)</option>
+                                    <option value=" ">Leerzeichen (1 000,00)</option>
+                                    <option value="">Keins (1000,00)</option>
+                                </select>
+                            </label>
+                        </div>
+
+                        <div class="settings-group">
+                            <label class="settings-label">
+                                <span>Dezimaltrennzeichen</span>
+                                <select id="setting-decimal-separator" class="settings-input">
+                                    <option value="," selected>Komma (1.000,00)</option>
+                                    <option value=".">Punkt (1.000.00)</option>
+                                </select>
+                            </label>
+                        </div>
+
+                        <div class="settings-preview">
+                            <strong>Vorschau:</strong>
+                            <span id="formatting-preview">1.234.567,89 €</span>
+                        </div>
+                    </div>
+
+                    <!-- Default Values Settings -->
+                    <div class="settings-tab-content" id="defaults-settings">
+                        <h4>Standardwerte für neue Projekte</h4>
+                        
+                        <div class="settings-group">
+                            <label class="settings-label">
+                                <span>Standard Projektdauer (Monate)</span>
+                                <input type="number" id="setting-default-duration" class="settings-input" value="24" min="1" max="120">
+                            </label>
+                        </div>
+
+                        <div class="settings-group">
+                            <label class="settings-label">
+                                <span>Standard Planungsphase (Monate)</span>
+                                <input type="number" id="setting-default-planning" class="settings-input" value="6" min="1" max="24">
+                            </label>
+                        </div>
+
+                        <div class="settings-group">
+                            <label class="settings-label">
+                                <span>Standard BGF pro WE (m²)</span>
+                                <input type="number" id="setting-default-bgf-per-we" class="settings-input" value="80" min="20" max="200" step="5">
+                            </label>
+                        </div>
+
+                        <div class="settings-group">
+                            <label class="settings-label">
+                                <span>Standard BRI/BGF Faktor</span>
+                                <input type="number" id="setting-default-bri-factor" class="settings-input" value="3.5" min="2.5" max="5.0" step="0.1">
+                            </label>
+                        </div>
+
+                        <div class="settings-group">
+                            <label class="settings-label">
+                                <span>Standard WFL/BGF Faktor</span>
+                                <input type="number" id="setting-default-wfl-factor" class="settings-input" value="0.85" min="0.7" max="0.95" step="0.05">
+                            </label>
+                        </div>
+
+                        <div class="settings-group">
+                            <h5>Standard Kostengruppen-Aufteilung (%)</h5>
+                            <div class="kg-defaults-grid">
+                                <label class="settings-label">
+                                    <span>KG 300 (Baukonstruktion)</span>
+                                    <input type="number" id="setting-kg300-percent" class="settings-input" value="55" min="0" max="100">
+                                </label>
+                                <label class="settings-label">
+                                    <span>KG 400 (Technische Anlagen)</span>
+                                    <input type="number" id="setting-kg400-percent" class="settings-input" value="25" min="0" max="100">
+                                </label>
+                                <label class="settings-label">
+                                    <span>KG 500 (Außenanlagen)</span>
+                                    <input type="number" id="setting-kg500-percent" class="settings-input" value="5" min="0" max="100">
+                                </label>
+                                <label class="settings-label">
+                                    <span>KG 700 (Baunebenkosten)</span>
+                                    <input type="number" id="setting-kg700-percent" class="settings-input" value="15" min="0" max="100">
+                                </label>
+                            </div>
+                            <div class="kg-total-display">
+                                <strong>Gesamt: <span id="kg-total-percent">100</span>%</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Backup Settings -->
+                    <div class="settings-tab-content" id="backup-settings">
+                        <h4>Backup und Datensicherung</h4>
+                        
+                        <div class="settings-group">
+                            <label class="settings-checkbox">
+                                <input type="checkbox" id="setting-auto-backup" checked>
+                                <span class="checkmark"></span>
+                                Automatische Backups aktivieren
+                            </label>
+                        </div>
+
+                        <div class="settings-group">
+                            <label class="settings-label">
+                                <span>Backup-Intervall</span>
+                                <select id="setting-backup-interval" class="settings-input">
+                                    <option value="5">Alle 5 Minuten</option>
+                                    <option value="15" selected>Alle 15 Minuten</option>
+                                    <option value="30">Alle 30 Minuten</option>
+                                    <option value="60">Stündlich</option>
+                                </select>
+                            </label>
+                        </div>
+
+                        <div class="settings-group">
+                            <label class="settings-label">
+                                <span>Anzahl Backups vorhalten</span>
+                                <input type="number" id="setting-backup-count" class="settings-input" value="10" min="3" max="50">
+                            </label>
+                        </div>
+
+                        <div class="backup-actions">
+                            <button id="backup-now-btn" class="btn btn-primary">
+                                <i class="fas fa-download"></i> Backup jetzt erstellen
+                            </button>
+                            <button id="restore-backup-btn" class="btn btn-secondary">
+                                <i class="fas fa-upload"></i> Backup wiederherstellen
+                            </button>
+                            <button id="clear-backups-btn" class="btn btn-warning">
+                                <i class="fas fa-trash"></i> Alle Backups löschen
+                            </button>
+                        </div>
+
+                        <div class="backup-status">
+                            <h5>Backup-Status</h5>
+                            <div id="backup-status-content">
+                                <p>Letztes Backup: <span id="last-backup-time">Nie</span></p>
+                                <p>Anzahl Backups: <span id="backup-count-display">0</span></p>
+                                <p>Speicherplatz: <span id="backup-storage-size">0 KB</span></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notification Settings -->
+                    <div class="settings-tab-content" id="notifications-settings">
+                        <h4>Benachrichtigungseinstellungen</h4>
+                        
+                        <div class="settings-group">
+                            <label class="settings-checkbox">
+                                <input type="checkbox" id="setting-show-notifications" checked>
+                                <span class="checkmark"></span>
+                                Benachrichtigungen anzeigen
+                            </label>
+                        </div>
+
+                        <div class="settings-group">
+                            <label class="settings-label">
+                                <span>Benachrichtigungsdauer (Sekunden)</span>
+                                <input type="number" id="setting-notification-duration" class="settings-input" value="5" min="1" max="30">
+                            </label>
+                        </div>
+
+                        <div class="settings-group">
+                            <h5>Benachrichtigungstypen</h5>
+                            
+                            <label class="settings-checkbox">
+                                <input type="checkbox" id="setting-notify-save" checked>
+                                <span class="checkmark"></span>
+                                Beim Speichern
+                            </label>
+                            
+                            <label class="settings-checkbox">
+                                <input type="checkbox" id="setting-notify-calc" checked>
+                                <span class="checkmark"></span>
+                                Bei Kalkulationsänderungen
+                            </label>
+                            
+                            <label class="settings-checkbox">
+                                <input type="checkbox" id="setting-notify-export" checked>
+                                <span class="checkmark"></span>
+                                Beim Export
+                            </label>
+                            
+                            <label class="settings-checkbox">
+                                <input type="checkbox" id="setting-notify-errors" checked>
+                                <span class="checkmark"></span>
+                                Bei Fehlern
+                            </label>
+                        </div>
+
+                        <div class="settings-group">
+                            <button id="test-notification-btn" class="btn btn-info">
+                                <i class="fas fa-bell"></i> Test-Benachrichtigung
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="settings-cancel-btn">Abbrechen</button>
+                <button type="button" class="btn btn-warning" id="settings-reset-btn">Zurücksetzen</button>
+                <button type="button" class="btn btn-primary" id="settings-save-btn">Speichern</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="js/constants.js"></script>
     <script src="js/utils.js"></script>
     <script src="js/excel-export.js"></script>
+    <script src="js/settings.js"></script>
     <script src="js/app.js"></script>
     <script src="js/projects.js"></script>
     <script src="js/kalkulation.js"></script>
@@ -938,6 +1247,11 @@
                         try {
                             // 2. Module erstellen (nur wenn Klassen existieren)
                             console.log('Erstelle Module...');
+                            
+                            if (window.SettingsManager) {
+                                window.settingsManager = new SettingsManager();
+                                console.log('✓ SettingsManager');
+                            }
                             
                             if (window.ProjectsModule) {
                                 window.projectsModule = new ProjectsModule();

@@ -2363,4 +2363,536 @@ body {
     .comparison-grid {
         grid-template-columns: 1fr;
     }
+}
+
+/* Settings Modal Styles */
+.settings-nav {
+    display: flex;
+    border-bottom: 2px solid var(--border-color);
+    margin-bottom: 2rem;
+    overflow-x: auto;
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+    margin: -1.5rem -1.5rem 2rem -1.5rem;
+    padding: 0 1.5rem;
+}
+
+.settings-nav-tab {
+    background: none;
+    border: none;
+    padding: 1rem 1.5rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.settings-nav-tab:hover {
+    color: var(--primary-color);
+    background-color: rgba(0, 102, 204, 0.1);
+}
+
+.settings-nav-tab.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+    background-color: rgba(0, 102, 204, 0.1);
+}
+
+.settings-content {
+    min-height: 400px;
+}
+
+.settings-tab-content {
+    display: none;
+}
+
+.settings-tab-content.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
+
+.settings-tab-content h4 {
+    margin: 0 0 2rem 0;
+    color: var(--text-primary);
+    font-size: 1.25rem;
+    font-weight: 600;
+    border-bottom: 2px solid var(--primary-color);
+    padding-bottom: 0.75rem;
+}
+
+.settings-tab-content h5 {
+    margin: 1.5rem 0 1rem 0;
+    color: var(--text-primary);
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.settings-group {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+}
+
+.settings-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    gap: 1rem;
+}
+
+.settings-label span {
+    font-weight: 500;
+    color: var(--text-primary);
+    flex: 1;
+    min-width: 150px;
+}
+
+.settings-input {
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    font-size: 0.875rem;
+    background: var(--bg-primary);
+    transition: border-color 0.2s ease;
+    flex: 0 0 250px;
+    max-width: 250px;
+}
+
+.settings-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+}
+
+/* Custom Checkbox Styles */
+.settings-checkbox {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    border-radius: var(--border-radius);
+    transition: background-color 0.2s ease;
+}
+
+.settings-checkbox:hover {
+    background-color: rgba(0, 102, 204, 0.05);
+}
+
+.settings-checkbox input[type="checkbox"] {
+    display: none;
+}
+
+.checkmark {
+    width: 20px;
+    height: 20px;
+    background-color: var(--bg-primary);
+    border: 2px solid var(--border-color);
+    border-radius: 4px;
+    margin-right: 1rem;
+    position: relative;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.settings-checkbox input[type="checkbox"]:checked + .checkmark {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.settings-checkbox input[type="checkbox"]:checked + .checkmark::after {
+    content: '';
+    position: absolute;
+    left: 6px;
+    top: 2px;
+    width: 6px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+/* Settings Preview */
+.settings-preview {
+    background: var(--bg-primary);
+    border: 2px solid var(--primary-color);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    margin-top: 1rem;
+    text-align: center;
+}
+
+.settings-preview strong {
+    color: var(--text-primary);
+    margin-right: 1rem;
+}
+
+.settings-preview span {
+    color: var(--primary-color);
+    font-weight: 600;
+    font-size: 1.125rem;
+}
+
+/* KG Defaults Grid */
+.kg-defaults-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.kg-total-display {
+    text-align: center;
+    padding: 1rem;
+    background: var(--bg-primary);
+    border: 2px solid var(--primary-color);
+    border-radius: var(--border-radius);
+    margin-top: 1rem;
+}
+
+.kg-total-display strong {
+    color: var(--text-primary);
+    font-size: 1.125rem;
+}
+
+#kg-total-percent {
+    color: var(--primary-color);
+    font-weight: 700;
+}
+
+/* Backup Actions */
+.backup-actions {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+}
+
+.backup-status {
+    background: var(--bg-primary);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    border: 1px solid var(--border-color);
+}
+
+.backup-status h5 {
+    margin: 0 0 1rem 0;
+    color: var(--text-primary);
+    font-size: 1rem;
+    font-weight: 600;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.5rem;
+}
+
+.backup-status p {
+    margin: 0.5rem 0;
+    color: var(--text-secondary);
+    display: flex;
+    justify-content: space-between;
+}
+
+.backup-status span {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+/* Notification Settings */
+.settings-group .settings-checkbox {
+    margin-bottom: 0.75rem;
+}
+
+.settings-group .settings-checkbox:last-child {
+    margin-bottom: 0;
+}
+
+/* Project Selector */
+.project-selector {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    font-size: 0.875rem;
+    background: var(--bg-primary);
+    min-width: 200px;
+}
+
+/* Badge Styles */
+.badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: 20px;
+}
+
+.badge-success {
+    background-color: rgba(40, 167, 69, 0.1);
+    color: var(--success-color);
+    border: 1px solid var(--success-color);
+}
+
+.badge-danger {
+    background-color: rgba(220, 53, 69, 0.1);
+    color: var(--danger-color);
+    border: 1px solid var(--danger-color);
+}
+
+.badge-warning {
+    background-color: rgba(255, 193, 7, 0.1);
+    color: var(--warning-color);
+    border: 1px solid var(--warning-color);
+}
+
+.badge-info {
+    background-color: rgba(23, 162, 184, 0.1);
+    color: var(--info-color);
+    border: 1px solid var(--info-color);
+}
+
+.badge-secondary {
+    background-color: rgba(108, 117, 125, 0.1);
+    color: var(--secondary-color);
+    border: 1px solid var(--secondary-color);
+}
+
+/* Settings Modal Responsive */
+@media (max-width: 768px) {
+    .settings-nav {
+        flex-direction: column;
+        border-bottom: none;
+    }
+
+    .settings-nav-tab {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid var(--border-color);
+        border-radius: 0;
+    }
+
+    .settings-nav-tab.active {
+        border-bottom-color: var(--primary-color);
+        border-left: 3px solid var(--primary-color);
+    }
+
+    .settings-label {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .settings-input {
+        flex: 1;
+        max-width: none;
+        width: 100%;
+    }
+
+    .kg-defaults-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .backup-actions {
+        flex-direction: column;
+    }
+
+    .backup-actions .btn {
+        width: 100%;
+    }
+}
+
+/* Dark Theme */
+body.theme-dark {
+    --bg-primary: #1e1e1e;
+    --bg-secondary: #2d2d2d;
+    --bg-tertiary: #404040;
+    
+    --text-primary: #ffffff;
+    --text-secondary: #cccccc;
+    --text-muted: #999999;
+    
+    --border-color: #404040;
+    
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+body.theme-dark .app-header {
+    background: var(--bg-primary);
+    border-bottom-color: var(--border-color);
+}
+
+body.theme-dark .main-nav {
+    background: var(--bg-primary);
+    border-bottom-color: var(--border-color);
+}
+
+body.theme-dark .nav-tab:hover {
+    background-color: var(--bg-secondary);
+}
+
+body.theme-dark .nav-tab.active {
+    background-color: var(--bg-secondary);
+}
+
+body.theme-dark .calculation-table th {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+body.theme-dark .calculation-table tbody tr:hover {
+    background-color: var(--bg-tertiary);
+}
+
+body.theme-dark .calculation-table th:first-child,
+body.theme-dark .calculation-table td:first-child {
+    background: var(--bg-primary);
+}
+
+body.theme-dark .calculation-table th:nth-child(2),
+body.theme-dark .calculation-table td:nth-child(2) {
+    background: var(--bg-primary);
+}
+
+body.theme-dark .modal-content {
+    background: var(--bg-primary);
+}
+
+body.theme-dark .modal-header {
+    background-color: var(--bg-secondary);
+}
+
+body.theme-dark .modal-footer {
+    background-color: var(--bg-secondary);
+}
+
+body.theme-dark .settings-nav {
+    background: var(--bg-secondary);
+}
+
+body.theme-dark .settings-group {
+    background: var(--bg-secondary);
+}
+
+body.theme-dark .settings-preview {
+    background: var(--bg-primary);
+}
+
+body.theme-dark .kg-total-display {
+    background: var(--bg-primary);
+}
+
+body.theme-dark .backup-status {
+    background: var(--bg-primary);
+}
+
+/* Compact Mode */
+body.compact-mode {
+    font-size: 13px;
+}
+
+body.compact-mode .header-content {
+    padding: 0 1.5rem;
+}
+
+body.compact-mode .header-content h1 {
+    font-size: 1.25rem;
+}
+
+body.compact-mode .nav-tab {
+    padding: 0.75rem 1rem;
+    font-size: 0.8rem;
+}
+
+body.compact-mode .main-content {
+    padding: 1.5rem;
+}
+
+body.compact-mode .module-header {
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+}
+
+body.compact-mode .module-header h2 {
+    font-size: 1.25rem;
+}
+
+body.compact-mode .overview-card {
+    padding: 1rem;
+}
+
+body.compact-mode .card-icon {
+    width: 50px;
+    height: 50px;
+    font-size: 1.25rem;
+}
+
+body.compact-mode .card-value {
+    font-size: 1.5rem;
+}
+
+body.compact-mode .stats-card .card-value {
+    font-size: 1.75rem;
+}
+
+body.compact-mode .calculation-table th,
+body.compact-mode .calculation-table td {
+    padding: 0.5rem;
+    font-size: 0.8rem;
+}
+
+body.compact-mode .kennzahlen-section,
+body.compact-mode .liquiditaet-settings {
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+body.compact-mode .settings-group {
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+body.compact-mode .project-card {
+    padding: 1rem;
+}
+
+body.compact-mode .chart-container {
+    padding: 1rem;
+}
+
+body.compact-mode .chart-content {
+    height: 250px;
+}
+
+body.compact-mode .modal-body {
+    padding: 1rem;
+    max-height: calc(90vh - 180px);
+}
+
+body.compact-mode .modal-footer {
+    padding: 1rem;
+}
+
+/* Responsive adjustments for compact mode */
+@media (max-width: 768px) {
+    body.compact-mode .main-content {
+        padding: 1rem;
+    }
+
+    body.compact-mode .overview-card,
+    body.compact-mode .stats-card {
+        padding: 0.75rem;
+    }
+
+    body.compact-mode .card-value {
+        font-size: 1.25rem;
+    }
 } 

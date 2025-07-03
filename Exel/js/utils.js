@@ -177,10 +177,15 @@ class Utils {
 
     // File Utilities
     static downloadJSON(data, filename) {
-        const blob = new Blob([JSON.stringify(data, null, 2)], { 
-            type: 'application/json' 
-        });
-        this.downloadBlob(blob, filename);
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
     }
 
     static downloadCSV(data, filename) {
@@ -212,209 +217,85 @@ class Utils {
     }
 
     // Modal Utilities
-    static createModal(options = {}) {
-        const {
-            title = 'Modal',
-            content = '',
-            size = 'normal',
-            buttons = [],
-            onClose = null,
-            closeOnBackdrop = true
-        } = options;
+    static createModal({ title, content, buttons = [], size = 'normal' }) {
+        const modal = this.createElement('div', 'modal');
+        modal.style.display = 'flex';
+        modal.style.alignItems = 'center';
+        modal.style.justifyContent = 'center';
 
-        const modal = this.createElement('div', 'modal show');
-        const sizeClass = size === 'large' ? 'large' : '';
+        const modalContent = this.createElement('div', `modal-content ${size === 'large' ? 'large' : ''}`);
         
-        modal.innerHTML = `
-            <div class="modal-content ${sizeClass}">
-                <div class="modal-header">
-                    <h3>${title}</h3>
-                    <button class="modal-close" type="button">&times;</button>
-                </div>
-                <div class="modal-body">
-                    ${content}
-                </div>
-                <div class="modal-footer">
-                    ${buttons.map((btn, index) => 
-                        `<button class="btn ${btn.className || 'btn-secondary'}" 
-                                 data-button-index="${index}"
-                                 type="button">${btn.text}</button>`
-                    ).join('')}
-                </div>
-            </div>
-        `;
+        // Header
+        const header = this.createElement('div', 'modal-header');
+        const titleElement = this.createElement('h3');
+        titleElement.textContent = title;
+        
+        const closeBtn = this.createElement('button', 'modal-close');
+        closeBtn.innerHTML = '&times;';
+        closeBtn.addEventListener('click', () => this.closeModal(modal));
+        
+        header.appendChild(titleElement);
+        header.appendChild(closeBtn);
 
-        // Add event listeners
-        const closeBtn = modal.querySelector('.modal-close');
-        if (closeBtn) {
-            closeBtn.addEventListener('click', () => {
-                this.closeModal(modal);
-                if (onClose) onClose();
-            });
+        // Body
+        const body = this.createElement('div', 'modal-body');
+        if (typeof content === 'string') {
+            body.innerHTML = content;
+        } else {
+            body.appendChild(content);
         }
 
-        // Backdrop click to close
-        if (closeOnBackdrop) {
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    this.closeModal(modal);
-                    if (onClose) onClose();
-                }
-            });
+        // Footer
+        const footer = this.createElement('div', 'modal-footer');
+        buttons.forEach(buttonConfig => {
+            const button = this.createElement('button', `btn ${buttonConfig.className || 'btn-secondary'}`);
+            button.textContent = buttonConfig.text;
+            button.addEventListener('click', buttonConfig.handler);
+            footer.appendChild(button);
+        });
+
+        modalContent.appendChild(header);
+        modalContent.appendChild(body);
+        if (buttons.length > 0) {
+            modalContent.appendChild(footer);
         }
 
-        // Escape key to close
-        const escapeHandler = (e) => {
-            if (e.key === 'Escape') {
-                this.closeModal(modal);
-                if (onClose) onClose();
-                document.removeEventListener('keydown', escapeHandler);
-            }
-        };
-        document.addEventListener('keydown', escapeHandler);
+        modal.appendChild(modalContent);
+        document.body.appendChild(modal);
 
-        // Button handlers - Using index-based approach for reliability
-        buttons.forEach((btn, index) => {
-            const buttonEl = modal.querySelector(`[data-button-index="${index}"]`);
-            if (buttonEl && btn.handler) {
-                buttonEl.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    try {
-                        btn.handler(modal, e);
-                    } catch (error) {
-                        console.error('Button handler error:', error);
-                    }
-                });
+        // Close on background click
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                this.closeModal(modal);
             }
         });
 
-        // Store cleanup function on modal
-        modal._cleanup = () => {
-            document.removeEventListener('keydown', escapeHandler);
-        };
-
-        document.body.appendChild(modal);
-        
-        // Focus trap - focus first focusable element
-        setTimeout(() => {
-            const firstFocusable = modal.querySelector('input, select, textarea, button:not(.modal-close)');
-            if (firstFocusable) firstFocusable.focus();
-        }, 100);
-        
         return modal;
     }
 
     static closeModal(modal) {
         if (modal && modal.parentNode) {
-            // Call cleanup if exists
-            if (modal._cleanup) {
-                modal._cleanup();
-            }
-            
-            // Fade out animation
-            modal.style.opacity = '0';
-            modal.style.transform = 'scale(0.9)';
-            
-            setTimeout(() => {
-                if (modal.parentNode) {
-                    modal.remove();
-                }
-            }, 200);
+            modal.parentNode.removeChild(modal);
         }
     }
 
     // Notification System
-    static showNotification(message, type = 'info', duration = 3000) {
-        // Remove existing notifications
-        const existingNotifications = document.querySelectorAll('.notification');
-        existingNotifications.forEach(n => n.remove());
-        
-        const notification = document.createElement('div');
-        notification.className = `notification notification-${type}`;
-        notification.innerHTML = `
-            <div class="notification-content">
-                <i class="fas fa-${this.getNotificationIcon(type)}"></i>
-                <span class="notification-message">${message}</span>
-                <button class="notification-close">&times;</button>
-            </div>
-        `;
-        
-        // Add styles if not already present
-        if (!document.querySelector('#notification-styles')) {
-            const styles = document.createElement('style');
-            styles.id = 'notification-styles';
-            styles.textContent = `
-                .notification {
-                    position: fixed;
-                    top: 20px;
-                    right: 20px;
-                    background: white;
-                    border-radius: 8px;
-                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-                    border-left: 4px solid #007bff;
-                    z-index: 10000;
-                    min-width: 300px;
-                    max-width: 500px;
-                    animation: slideIn 0.3s ease-out;
-                }
-                .notification-success { border-left-color: #28a745; }
-                .notification-warning { border-left-color: #ffc107; }
-                .notification-error { border-left-color: #dc3545; }
-                .notification-content {
-                    padding: 16px;
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                }
-                .notification-message {
-                    flex: 1;
-                    font-size: 14px;
-                    color: #333;
-                }
-                .notification-close {
-                    background: none;
-                    border: none;
-                    font-size: 18px;
-                    cursor: pointer;
-                    color: #999;
-                    padding: 0;
-                    width: 20px;
-                    height: 20px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                }
-                .notification-close:hover {
-                    color: #333;
-                }
-                @keyframes slideIn {
-                    from {
-                        transform: translateX(100%);
-                        opacity: 0;
-                    }
-                    to {
-                        transform: translateX(0);
-                        opacity: 1;
-                    }
-                }
-            `;
-            document.head.appendChild(styles);
+    static showNotification(message, type = 'info', duration = null) {
+        // Check if settings manager exists and notifications are enabled
+        if (window.settingsManager && !window.settingsManager.shouldShowNotification(type)) {
+            return;
         }
+
+        // Use settings duration if not specified
+        const notificationDuration = duration || (window.settingsManager ? window.settingsManager.getNotificationDuration() : 5000);
         
-        document.body.appendChild(notification);
-        
-        // Close button functionality
-        const closeBtn = notification.querySelector('.notification-close');
-        const closeNotification = () => notification.remove();
-        closeBtn.addEventListener('click', closeNotification);
-        
-        // Auto-close after duration
-        if (duration > 0) {
-            setTimeout(closeNotification, duration);
+        // Call global showNotification if it exists
+        if (window.showNotification) {
+            window.showNotification(message, type, notificationDuration);
+        } else {
+            // Fallback simple notification
+            console.log(`${type.toUpperCase()}: ${message}`);
         }
-        
-        return notification;
     }
     
     static getNotificationIcon(type) {
@@ -457,13 +338,11 @@ class Utils {
     // Form Utilities
     static serializeForm(form) {
         const formData = new FormData(form);
-        const data = {};
-        
+        const serialized = {};
         for (let [key, value] of formData.entries()) {
-            data[key] = value;
+            serialized[key] = value;
         }
-        
-        return data;
+        return serialized;
     }
 
     static populateForm(form, data) {
@@ -575,10 +454,54 @@ class Utils {
     }
 
     // URL Utilities
-    static generateFilename(projectName, type, extension = 'json') {
-        const safeName = projectName.replace(/[^a-z0-9]/gi, '_');
-        const date = new Date().toISOString().split('T')[0];
-        return `${type}_${safeName}_${date}.${extension}`;
+    static generateFilename(basename, type, extension) {
+        const timestamp = new Date().toISOString().split('T')[0];
+        return `${basename}_${type}_${timestamp}.${extension}`;
+    }
+
+    /**
+     * Utility functions for settings management
+     */
+    static setElementValue(selector, value) {
+        const element = this.findElement(selector);
+        if (element) {
+            element.value = value;
+        }
+    }
+
+    static getElementValue(selector) {
+        const element = this.findElement(selector);
+        return element ? element.value : '';
+    }
+
+    static setElementChecked(selector, checked) {
+        const element = this.findElement(selector);
+        if (element && element.type === 'checkbox') {
+            element.checked = checked;
+        }
+    }
+
+    static getElementChecked(selector) {
+        const element = this.findElement(selector);
+        return element && element.type === 'checkbox' ? element.checked : false;
+    }
+
+    /**
+     * Enhanced formatCurrency function that uses settings
+     */
+    static formatCurrency(value) {
+        if (window.settingsManager) {
+            return window.settingsManager.formatNumber(
+                value,
+                window.settingsManager.getCurrency(),
+                window.settingsManager.getDecimalPlaces(),
+                window.settingsManager.getThousandsSeparator(),
+                window.settingsManager.getDecimalSeparator()
+            );
+        }
+        
+        // Fallback to simple formatting
+        return `${value.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`;
     }
 }
 
