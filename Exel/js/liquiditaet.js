@@ -777,8 +777,14 @@ class LiquiditaetModule {
             const { kostenverteilung, quarters } = this.currentProject.liquiditaetsplanung;
             const totals = this.calculateQuarterTotals();
             
-            // Update totals row
-            const totalRow = Utils.findElement('#liquiditaet-tbody .totals-row');
+            // Update totals row - check if it exists first
+            const liquiditaetTbody = document.getElementById('liquiditaet-tbody');
+            if (!liquiditaetTbody) {
+                console.log('Liquiditaet tbody not found');
+                return;
+            }
+            
+            const totalRow = liquiditaetTbody.querySelector('.totals-row');
             if (totalRow) {
                 const quarterCells = totalRow.querySelectorAll('.quarter-total');
                 quarterCells.forEach((cell, index) => {
@@ -788,67 +794,196 @@ class LiquiditaetModule {
                         cell.innerHTML = `<strong>${formatCurrency(total)}</strong>`;
                     }
                 });
-
-                // Update total sum check
-                const totalSumCell = totalRow.querySelector('.total-sum');
-                if (totalSumCell) {
-                    const sumCheck = Object.values(totals).reduce((sum, val) => sum + val, 0);
-                    totalSumCell.innerHTML = `<strong>${formatCurrency(sumCheck)}</strong>`;
-                }
-            }
-
-            // Update cumulative row
-            const cumulativeRow = Utils.findElement('#liquiditaet-tbody .cumulative-row');
-            if (cumulativeRow) {
-                const cumulativeCells = cumulativeRow.querySelectorAll('.quarter-cumulative');
-                let runningTotal = 0;
-                
-                cumulativeCells.forEach((cell, index) => {
-                    if (quarters[index]) {
-                        const quarterId = quarters[index].id;
-                        runningTotal += (totals[quarterId] || 0);
-                        cell.innerHTML = `<strong>${formatCurrency(runningTotal)}</strong>`;
-                    }
-                });
-
-                // Update final cumulative sum
-                const finalCumulativeCell = cumulativeRow.querySelector('.cumulative-final');
-                if (finalCumulativeCell) {
-                    finalCumulativeCell.innerHTML = `<strong>${formatCurrency(runningTotal)}</strong>`;
-                }
             }
         } catch (error) {
-            Utils.handleError(error, 'Updating Quarter Totals');
+            Utils.handleError(error, 'Update Quarter Totals');
         }
     }
 
     exportLiquiditaetsplanung() {
         try {
             if (!this.currentProject) {
-                showNotification('Kein Projekt ausgewählt', 'warning');
+                Utils.showNotification('Kein Projekt ausgewählt', 'warning');
                 return;
             }
 
             if (!this.currentProject.liquiditaetsplanung) {
-                showNotification('Keine Liquiditätsplanung vorhanden', 'warning');
+                Utils.showNotification('Keine Liquiditätsplanung vorhanden', 'warning');
                 return;
             }
 
+            // Create export modal for liquidity planning
+            const modal = Utils.createModal({
+                title: 'Liquiditätsplanung exportieren',
+                content: `
+                    <div class="export-options">
+                        <h4>Exportformat wählen:</h4>
+                        <div class="export-format-options">
+                            <label class="export-option">
+                                <input type="radio" name="liquidity-export-format" value="excel" checked>
+                                <div class="option-content">
+                                    <i class="fas fa-file-excel"></i>
+                                    <div>
+                                        <strong>Excel (.xlsx)</strong>
+                                        <p>Professionell formatierte Liquiditätsplanung mit Diagrammen</p>
+                                    </div>
+                                </div>
+                            </label>
+                            <label class="export-option">
+                                <input type="radio" name="liquidity-export-format" value="csv">
+                                <div class="option-content">
+                                    <i class="fas fa-file-csv"></i>
+                                    <div>
+                                        <strong>CSV (.csv)</strong>
+                                        <p>Einfache Tabellendaten für externe Bearbeitung</p>
+                                    </div>
+                                </div>
+                            </label>
+                            <label class="export-option">
+                                <input type="radio" name="liquidity-export-format" value="json">
+                                <div class="option-content">
+                                    <i class="fas fa-file-code"></i>
+                                    <div>
+                                        <strong>JSON (.json)</strong>
+                                        <p>Vollständige Daten mit Metainformationen</p>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                        
+                        <div class="export-details">
+                            <h4>Zusätzliche Informationen:</h4>
+                            <div class="detail-options">
+                                <label>
+                                    <input type="checkbox" id="include-cumulative" checked>
+                                    Kumulative Werte einschließen
+                                </label>
+                                <label>
+                                    <input type="checkbox" id="include-cashflow" checked>
+                                    Cash-Flow-Analyse einschließen
+                                </label>
+                                <label>
+                                    <input type="checkbox" id="include-summary" checked>
+                                    Projektzusammenfassung einschließen
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                `,
+                buttons: [
+                    {
+                        text: 'Abbrechen',
+                        class: 'btn-secondary',
+                        onClick: (modal) => Utils.closeModal(modal)
+                    },
+                    {
+                        text: 'Exportieren',
+                        class: 'btn-primary',
+                        onClick: (modal) => this.performLiquidityExport(modal)
+                    }
+                ]
+            });
+        } catch (error) {
+            Utils.handleError(error, 'Exporting Liquiditaetsplanung');
+        }
+    }
+
+    async performLiquidityExport(modal) {
+        try {
+            const format = modal.querySelector('input[name="liquidity-export-format"]:checked')?.value;
+            const options = {
+                includeCumulative: modal.querySelector('#include-cumulative')?.checked,
+                includeCashflow: modal.querySelector('#include-cashflow')?.checked,
+                includeSummary: modal.querySelector('#include-summary')?.checked
+            };
+            
+            Utils.closeModal(modal);
+            
+            switch (format) {
+                case 'excel':
+                    await this.exportToExcel(options);
+                    break;
+                case 'csv':
+                    this.exportToCSV(options);
+                    break;
+                case 'json':
+                    this.exportToJSON(options);
+                    break;
+                default:
+                    Utils.showNotification('Ungültiges Exportformat', 'error');
+            }
+        } catch (error) {
+            Utils.handleError(error, 'Performing Liquidity Export');
+        }
+    }
+
+    async exportToExcel(options) {
+        try {
+            if (!window.excelExportModule) {
+                Utils.showNotification('Excel-Export nicht verfügbar. Verwende CSV-Export.', 'warning');
+                this.exportToCSV(options);
+                return;
+            }
+
+            Utils.showNotification('Excel-Export wird vorbereitet...', 'info', 3000);
+            
+            const success = await window.excelExportModule.exportLiquiditaetToExcel(this.currentProject);
+            
+            if (success) {
+                Utils.showNotification('Excel-Export erfolgreich erstellt', 'success');
+                
+                // Add to project history
+                if (window.app) {
+                    window.app.addHistoryEntry(this.currentProject.id, 'Liquiditätsplanung Excel-Export', {
+                        format: 'Excel (.xlsx)',
+                        options: options
+                    });
+                }
+            } else {
+                Utils.showNotification('Excel-Export fehlgeschlagen. Verwende CSV-Export.', 'warning');
+                this.exportToCSV(options);
+            }
+        } catch (error) {
+            Utils.handleError(error, 'Excel Export Liquidity');
+            // Fallback to CSV
+            this.exportToCSV(options);
+        }
+    }
+
+    exportToCSV(options) {
+        try {
             const data = this.prepareExportData();
+            const csvData = this.createCSVFromData(data, options);
             
-            // Export as JSON
-            const filename = Utils.generateFilename(this.currentProject.name, 'liquiditaetsplanung');
-            Utils.downloadJSON(data, filename);
-            
-            // Also create CSV for Excel import
-            const csvData = this.createCSVFromData(data);
             const csvFilename = Utils.generateFilename(this.currentProject.name, 'liquiditaetsplanung', 'csv');
             const csvBlob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
             Utils.downloadBlob(csvBlob, csvFilename);
             
-            showNotification('Liquiditätsplanung erfolgreich exportiert (JSON + CSV)', 'success');
+            Utils.showNotification('CSV-Export erfolgreich erstellt', 'success');
         } catch (error) {
-            Utils.handleError(error, 'Exporting Liquiditaetsplanung');
+            Utils.handleError(error, 'CSV Export Liquidity');
+        }
+    }
+
+    exportToJSON(options) {
+        try {
+            const data = this.prepareExportData();
+            
+            // Add options-based data
+            if (options.includeCashflow) {
+                data.detailedCashFlow = this.getDetailedCashFlow();
+            }
+            
+            if (options.includeSummary) {
+                data.projectSummary = this.getProjectSummary();
+            }
+            
+            const filename = Utils.generateFilename(this.currentProject.name, 'liquiditaetsplanung', 'json');
+            Utils.downloadJSON(data, filename);
+            
+            Utils.showNotification('JSON-Export erfolgreich erstellt', 'success');
+        } catch (error) {
+            Utils.handleError(error, 'JSON Export Liquidity');
         }
     }
 
@@ -897,66 +1032,6 @@ class LiquiditaetModule {
         });
 
         return data;
-    }
-
-    createCSVFromData(data) {
-        const headers = ['KGR', 'Positionsbezeichnung', 'Gesamt Kosten'];
-        data.quarters.forEach(quarter => {
-            headers.push(quarter.name);
-        });
-        headers.push('Summe');
-
-        const rows = [headers];
-
-        // Add cost group data with hierarchy
-        const kostengruppenDef = this.getKostengruppenForDistribution();
-        
-        kostengruppenDef.forEach(kgDef => {
-            const kgData = data.kostenverteilung[kgDef.nr];
-            if (!kgData || kgData.totalBetrag === 0) return;
-            
-            const isSubgroup = kgDef.parent !== undefined;
-            const namePrefix = isSubgroup ? '  ' : ''; // Einrückung für Untergruppen
-            const displayName = kgData.combined ? 
-                `${kgData.name} (${kgData.combined.join(' + ')})` : 
-                kgData.name;
-                
-            const row = [
-                kgDef.nr,
-                namePrefix + displayName,
-                kgData.totalBetrag.toFixed(0)
-            ];
-            
-            data.quarters.forEach(quarter => {
-                const amount = kgData.quarters[quarter.id] || 0;
-                row.push(amount > 0 ? amount.toFixed(0) : '');
-            });
-            
-            // Summe (gleich wie Gesamtkosten)
-            row.push(kgData.totalBetrag.toFixed(0));
-            
-            rows.push(row);
-        });
-
-        // Add totals row
-        const totalRow = ['GESAMT', 'Gesamtkosten', data.totals.gesamt.toFixed(0)];
-        data.quarters.forEach(quarter => {
-            totalRow.push((data.totals.quartalsTotals[quarter.id] || 0).toFixed(0));
-        });
-        totalRow.push(data.totals.gesamt.toFixed(0));
-        rows.push(totalRow);
-
-        // Add cumulative row
-        const cumulativeRow = ['KUMULIERT', 'Gesamtkosten kumuliert', ''];
-        let runningTotal = 0;
-        data.quarters.forEach(quarter => {
-            runningTotal += (data.totals.quartalsTotals[quarter.id] || 0);
-            cumulativeRow.push(runningTotal.toFixed(0));
-        });
-        cumulativeRow.push(''); // Leere Summe für kumulierte Zeile
-        rows.push(cumulativeRow);
-
-        return Utils.arrayToCSV(rows);
     }
 
     getCumulativeValues() {
@@ -1011,93 +1086,150 @@ class LiquiditaetModule {
         return cashFlow;
     }
 
-    debugKostenverteilung() {
-        if (!this.currentProject?.liquiditaetsplanung) {
-            console.log('Keine Liquiditätsplanung vorhanden');
-            return;
-        }
+    createCSVFromData(data, options = {}) {
+        const headers = ['KGR', 'Positionsbezeichnung', 'Gesamt Kosten'];
+        data.quarters.forEach(quarter => {
+            headers.push(quarter.name);
+        });
+        headers.push('Summe');
 
-        const { quarters, kostenverteilung } = this.currentProject.liquiditaetsplanung;
+        const rows = [headers];
+
+        // Add cost group data with hierarchy
+        const kostengruppenDef = this.getKostengruppenForDistribution();
         
-        console.log('=== LIQUIDITÄTS-DEBUG ===');
-        console.log('Quartale:', quarters.length);
-        console.log('Kostengruppen:', Object.keys(kostenverteilung).length);
-        
-        let gesamtKalkulation = 0;
-        let gesamtLiquiditaet = 0;
-        let quartalsSummen = {};
-        
-        // Initialisiere Quartalssummen
-        quarters.forEach(quarter => quartalsSummen[quarter.id] = 0);
-        
-        console.log('\n=== KOSTENGRUPPEN ===');
-        Object.entries(kostenverteilung).forEach(([kg, data]) => {
-            const quartalsTotal = Object.values(data.quarters).reduce((sum, val) => sum + val, 0);
-            gesamtKalkulation += data.totalBetrag;
-            gesamtLiquiditaet += quartalsTotal;
+        kostengruppenDef.forEach(kgDef => {
+            const kgData = data.kostenverteilung[kgDef.nr];
+            if (!kgData || kgData.totalBetrag === 0) return;
             
-            // Addiere zu Quartalssummen
-            quarters.forEach(quarter => {
-                quartalsSummen[quarter.id] += (data.quarters[quarter.id] || 0);
+            const isSubgroup = kgDef.parent !== undefined;
+            const namePrefix = isSubgroup ? '  ' : ''; // Einrückung für Untergruppen
+            const displayName = kgData.combined ? 
+                `${kgData.name} (${kgData.combined.join(' + ')})` : 
+                kgData.name;
+                
+            const row = [
+                kgDef.nr,
+                namePrefix + displayName,
+                kgData.totalBetrag.toFixed(0)
+            ];
+            
+            data.quarters.forEach(quarter => {
+                const amount = kgData.quarters[quarter.id] || 0;
+                row.push(amount > 0 ? amount.toFixed(0) : '');
             });
             
-            const differenz = quartalsTotal - data.totalBetrag;
-            console.log(`KG ${kg}: Kalkulation=${formatCurrency(data.totalBetrag)}, Quartale=${formatCurrency(quartalsTotal)}, Diff=${formatCurrency(differenz)}`);
+            // Summe (gleich wie Gesamtkosten)
+            row.push(kgData.totalBetrag.toFixed(0));
             
-            if (Math.abs(differenz) > 1) {
-                console.warn(`⚠️ Differenz bei KG ${kg}: ${formatCurrency(differenz)}`);
-            }
+            rows.push(row);
         });
-        
-        console.log('\n=== QUARTALS-SUMMEN ===');
-        let kumulativ = 0;
-        quarters.forEach(quarter => {
-            kumulativ += quartalsSummen[quarter.id];
-            console.log(`${quarter.name}: ${formatCurrency(quartalsSummen[quarter.id])} (Kumulativ: ${formatCurrency(kumulativ)})`);
+
+        // Add totals row
+        const totalRow = ['GESAMT', 'Gesamtkosten', data.totals.gesamt.toFixed(0)];
+        data.quarters.forEach(quarter => {
+            totalRow.push((data.totals.quartalsTotals[quarter.id] || 0).toFixed(0));
         });
-        
-        console.log('\n=== GESAMT-KONTROLLE ===');
-        console.log(`Kalkulation Total: ${formatCurrency(gesamtKalkulation)}`);
-        console.log(`Liquidität Total: ${formatCurrency(gesamtLiquiditaet)}`);
-        console.log(`Differenz: ${formatCurrency(gesamtLiquiditaet - gesamtKalkulation)}`);
-        
-        if (Math.abs(gesamtLiquiditaet - gesamtKalkulation) > 1) {
-            console.error('🚨 FEHLER: Gesamt-Differenz zwischen Kalkulation und Liquidität!');
-        } else {
-            console.log('✅ Berechnungen stimmen überein');
-        }
-    }
+        totalRow.push(data.totals.gesamt.toFixed(0));
+        rows.push(totalRow);
 
-    // Öffentliche Debug-Funktion
-    debug() {
-        this.debugKostenverteilung();
-    }
-
-    // Performance und Layout Debug
-    debugTableLayout() {
-        const table = Utils.findElement('#liquiditaet-table');
-        const container = Utils.findElement('.table-container');
-        
-        if (!table || !container) {
-            console.log('Tabelle oder Container nicht gefunden');
-            return;
+        // Add cumulative row if requested
+        if (options.includeCumulative) {
+        const cumulativeRow = ['KUMULIERT', 'Gesamtkosten kumuliert', ''];
+        let runningTotal = 0;
+        data.quarters.forEach(quarter => {
+            runningTotal += (data.totals.quartalsTotals[quarter.id] || 0);
+            cumulativeRow.push(runningTotal.toFixed(0));
+        });
+        cumulativeRow.push(''); // Leere Summe für kumulierte Zeile
+        rows.push(cumulativeRow);
         }
 
-        console.log('=== TABELLEN-LAYOUT DEBUG ===');
-        console.log('Container Breite:', container.offsetWidth, 'px');
-        console.log('Tabelle Breite:', table.offsetWidth, 'px');
-        console.log('Horizontales Scrolling:', container.scrollWidth > container.clientWidth ? 'JA' : 'NEIN');
-        console.log('Scroll-Breite:', container.scrollWidth, 'px');
-        console.log('Client-Breite:', container.clientWidth, 'px');
+        // Add cash flow analysis if requested
+        if (options.includeCashflow && data.cashFlow) {
+            rows.push(['']); // Empty row
+            rows.push(['CASH-FLOW-ANALYSE']);
+            rows.push(['Höchste Ausgaben', data.cashFlow.peaks.highest.quarter, data.cashFlow.peaks.highest.amount.toFixed(0)]);
+            rows.push(['Niedrigste Ausgaben', data.cashFlow.peaks.lowest.quarter, data.cashFlow.peaks.lowest.amount.toFixed(0)]);
+        }
+
+        return Utils.arrayToCSV(rows);
+    }
+
+    getDetailedCashFlow() {
+        // Enhanced cash flow analysis
+        const cashFlow = this.getProjectCashFlow();
         
-        // Prüfe Quartale
-        const quarters = table.querySelectorAll('.quarter-header');
-        console.log('Anzahl Quartale:', quarters.length);
-        console.log('Geschätzte Mindestbreite:', (quarters.length * 120) + 400, 'px');
+        // Add trend analysis
+        const quarterlyAmounts = Object.values(cashFlow.quarterly);
+        const trend = this.calculateTrend(quarterlyAmounts);
         
-        // Viewport-Info
-        console.log('Viewport Breite:', window.innerWidth, 'px');
-        console.log('Mobile Ansicht:', window.innerWidth <= 768 ? 'JA' : 'NEIN');
+        return {
+            ...cashFlow,
+            trend: trend,
+            totalProject: quarterlyAmounts.reduce((sum, amount) => sum + amount, 0),
+            averageQuarter: quarterlyAmounts.reduce((sum, amount) => sum + amount, 0) / quarterlyAmounts.length,
+            volatility: this.calculateVolatility(quarterlyAmounts)
+        };
+    }
+
+    calculateTrend(values) {
+        if (values.length < 2) return 'stable';
+        
+        const diffs = [];
+        for (let i = 1; i < values.length; i++) {
+            diffs.push(values[i] - values[i-1]);
+        }
+        
+        const avgDiff = diffs.reduce((sum, diff) => sum + diff, 0) / diffs.length;
+        
+        if (avgDiff > 0.1) return 'increasing';
+        if (avgDiff < -0.1) return 'decreasing';
+        return 'stable';
+    }
+
+    calculateVolatility(values) {
+        const mean = values.reduce((sum, val) => sum + val, 0) / values.length;
+        const variance = values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / values.length;
+        return Math.sqrt(variance);
+    }
+
+    getProjectSummary() {
+        const { quarters, kostenverteilung } = this.currentProject.liquiditaetsplanung;
+        
+        return {
+            projektName: this.currentProject.name,
+            planungsperiode: quarters.length,
+            gesamtkosten: Utils.sum(Object.values(kostenverteilung), 'totalBetrag'),
+            kostengruppenAnzahl: Object.keys(kostenverteilung).length,
+            aktivsteQuartale: this.getTopQuarters(3),
+            kostenverteilungTyp: this.analyzeCostDistribution()
+        };
+    }
+
+    getTopQuarters(count = 3) {
+        const { quarters, kostenverteilung } = this.currentProject.liquiditaetsplanung;
+        
+        const quarterTotals = quarters.map(quarter => ({
+            name: quarter.name,
+            total: Utils.sum(Object.values(kostenverteilung), item => item.quarters[quarter.id] || 0)
+        }));
+        
+        return quarterTotals
+            .sort((a, b) => b.total - a.total)
+            .slice(0, count);
+    }
+
+    analyzeCostDistribution() {
+        const { kostenverteilung } = this.currentProject.liquiditaetsplanung;
+        const totals = Object.values(kostenverteilung).map(kg => kg.totalBetrag);
+        
+        const max = Math.max(...totals);
+        const min = Math.min(...totals.filter(t => t > 0));
+        
+        if (max / min > 10) return 'stark_variierend';
+        if (max / min > 3) return 'variierend';
+        return 'ausgewogen';
     }
 
     syncWithKalkulation() {
@@ -1121,5 +1253,5 @@ class LiquiditaetModule {
     }
 }
 
-// Initialize Liquiditaet Module
-window.liquiditaetModule = new LiquiditaetModule(); 
+// Export for global access
+window.LiquiditaetModule = LiquiditaetModule; 

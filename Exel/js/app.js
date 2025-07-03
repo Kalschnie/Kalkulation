@@ -388,22 +388,252 @@ class App {
 
     exportData() {
         try {
-            const data = {
-                projects: this.projects,
-                version: '1.1.0',
-                exported: new Date().toISOString(),
-                metadata: {
-                    exportedBy: 'Kalkulationstool',
-                    projectCount: this.projects.length
-                }
-            };
+            if (!this.currentProject) {
+                Utils.showNotification('Bitte wählen Sie zuerst ein Projekt aus', 'warning');
+                return;
+            }
 
-            const filename = Utils.generateFilename('kalkulationstool', 'export');
-            Utils.downloadJSON(data, filename);
-            showNotification('Daten erfolgreich exportiert', 'success');
+            // Create export modal with options
+            const modal = Utils.createModal({
+                title: 'Daten exportieren',
+                content: `
+                    <div class="export-options">
+                        <h4>Exportformat wählen:</h4>
+                        <div class="export-format-options">
+                            <label class="export-option">
+                                <input type="radio" name="export-format" value="excel" checked>
+                                <div class="option-content">
+                                    <i class="fas fa-file-excel"></i>
+                                    <div>
+                                        <strong>Excel (.xlsx)</strong>
+                                        <p>Vollständige Projektkalkulation mit mehreren Arbeitsblättern</p>
+                                    </div>
+                                </div>
+                            </label>
+                            <label class="export-option">
+                                <input type="radio" name="export-format" value="json">
+                                <div class="option-content">
+                                    <i class="fas fa-file-code"></i>
+                                    <div>
+                                        <strong>JSON (.json)</strong>
+                                        <p>Alle Projektdaten für Backup und Import</p>
+                                    </div>
+                                </div>
+                            </label>
+                            <label class="export-option">
+                                <input type="radio" name="export-format" value="csv">
+                                <div class="option-content">
+                                    <i class="fas fa-file-csv"></i>
+                                    <div>
+                                        <strong>CSV (.csv)</strong>
+                                        <p>Einfache Tabellendaten für externe Bearbeitung</p>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                        
+                        <div class="export-scope">
+                            <h4>Exportumfang:</h4>
+                            <div class="scope-options">
+                                <label>
+                                    <input type="checkbox" id="export-overview" checked>
+                                    Projektübersicht
+                                </label>
+                                <label>
+                                    <input type="checkbox" id="export-kalkulation" checked>
+                                    Kalkulation KG100-800
+                                </label>
+                                <label>
+                                    <input type="checkbox" id="export-baukosten" checked>
+                                    Baukosten KG300-400
+                                </label>
+                                <label>
+                                    <input type="checkbox" id="export-liquiditaet" checked>
+                                    Liquiditätsplanung
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                `,
+                buttons: [
+                    {
+                        text: 'Abbrechen',
+                        className: 'btn-secondary',
+                        handler: (modal) => Utils.closeModal(modal)
+                    },
+                    {
+                        text: 'Exportieren',
+                        className: 'btn-primary',
+                        handler: (modal) => this.performExport(modal)
+                    }
+                ]
+            });
+            
+            // Add export modal styles
+            this.addExportModalStyles();
+            
         } catch (error) {
-            Utils.handleError(error, 'Exporting Data');
+            Utils.handleError(error, 'Export Data');
         }
+    }
+
+    async performExport(modal) {
+        try {
+            const format = modal.querySelector('input[name="export-format"]:checked')?.value;
+            const scope = {
+                overview: modal.querySelector('#export-overview')?.checked,
+                kalkulation: modal.querySelector('#export-kalkulation')?.checked,
+                baukosten: modal.querySelector('#export-baukosten')?.checked,
+                liquiditaet: modal.querySelector('#export-liquiditaet')?.checked
+            };
+            
+            Utils.closeModal(modal);
+            
+            switch (format) {
+                case 'excel':
+                    await this.exportToExcel(scope);
+                    break;
+                case 'json':
+                    this.exportToJSON();
+                    break;
+                case 'csv':
+                    this.exportToCSV(scope);
+                    break;
+                default:
+                    Utils.showNotification('Ungültiges Exportformat', 'error');
+            }
+        } catch (error) {
+            Utils.handleError(error, 'Performing Export');
+        }
+    }
+
+    async exportToExcel(scope) {
+        try {
+            if (!window.excelExportModule) {
+                Utils.showNotification('Excel-Export-Modul nicht verfügbar', 'error');
+                return;
+            }
+
+            Utils.showNotification('Excel-Export wird vorbereitet...', 'info', 5000);
+            
+            // Create a filtered project based on scope
+            const exportProject = { ...this.currentProject };
+            
+            if (!scope.kalkulation) delete exportProject.kalkulation;
+            if (!scope.baukosten) delete exportProject.baukosten;
+            if (!scope.liquiditaet) delete exportProject.liquiditaetsplanung;
+            
+            const success = await window.excelExportModule.exportProjectToExcel(exportProject);
+            
+            if (success) {
+                this.addHistoryEntry(this.currentProject.id, 'Excel-Export erstellt', {
+                    format: 'Excel (.xlsx)',
+                    scope: Object.keys(scope).filter(key => scope[key])
+                });
+            }
+        } catch (error) {
+            Utils.handleError(error, 'Excel Export');
+        }
+    }
+
+    exportToJSON() {
+        try {
+            const filename = Utils.generateFilename(this.currentProject.name, 'vollstaendig');
+            Utils.downloadJSON(this.currentProject, filename);
+            
+            Utils.showNotification('JSON-Export erfolgreich erstellt', 'success');
+            
+            this.addHistoryEntry(this.currentProject.id, 'JSON-Export erstellt', {
+                format: 'JSON',
+                filename
+            });
+        } catch (error) {
+            Utils.handleError(error, 'JSON Export');
+        }
+    }
+
+    exportToCSV(scope) {
+        try {
+            const csvData = this.prepareCSVData(scope);
+            const filename = Utils.generateFilename(this.currentProject.name, 'kalkulation', 'csv');
+            Utils.downloadCSV(csvData, filename);
+            
+            Utils.showNotification('CSV-Export erfolgreich erstellt', 'success');
+            
+            this.addHistoryEntry(this.currentProject.id, 'CSV-Export erstellt', {
+                format: 'CSV',
+                scope: Object.keys(scope).filter(key => scope[key])
+            });
+        } catch (error) {
+            Utils.handleError(error, 'CSV Export');
+        }
+    }
+
+    prepareCSVData(scope) {
+        const data = [];
+        
+        if (scope.overview) {
+            data.push(['PROJEKTÜBERSICHT']);
+            data.push(['Projektname', this.currentProject.name]);
+            data.push(['Status', this.currentProject.status]);
+            data.push(['BGF (m²)', this.currentProject.kennzahlen?.bgf || 0]);
+            data.push(['']);
+        }
+        
+        if (scope.kalkulation && this.currentProject.kalkulation) {
+            data.push(['KALKULATION KG100-800']);
+            data.push(['KG', 'Bezeichnung', 'Betrag (€)']);
+            this.currentProject.kalkulation.forEach(kg => {
+                data.push([kg.nr, kg.bezeichnung, kg.betrag || 0]);
+            });
+            data.push(['']);
+        }
+        
+        if (scope.baukosten && this.currentProject.baukosten) {
+            data.push(['BAUKOSTEN KG300-400']);
+            data.push(['Nr.', 'Gewerk', 'Kalkulation (€)', 'Vergabe (€)']);
+            this.currentProject.baukosten.forEach(gewerk => {
+                data.push([gewerk.nr, gewerk.bezeichnung, gewerk.kalkulation || 0, gewerk.vergabe || 0]);
+            });
+            data.push(['']);
+        }
+        
+        return data;
+    }
+
+    addExportModalStyles() {
+        if (document.querySelector('#export-modal-styles')) return;
+        
+        const styles = document.createElement('style');
+        styles.id = 'export-modal-styles';
+        styles.textContent = `
+            .export-options { margin: 20px 0; }
+            .export-format-options, .scope-options { margin: 15px 0; }
+            .export-option {
+                display: block;
+                margin: 10px 0;
+                padding: 15px;
+                border: 2px solid #e0e0e0;
+                border-radius: 8px;
+                cursor: pointer;
+                transition: all 0.2s ease;
+            }
+            .export-option:hover { border-color: #007bff; background: #f8f9fa; }
+            .export-option input[type="radio"] { margin-right: 10px; }
+            .export-option input[type="radio"]:checked + .option-content { color: #007bff; }
+            .option-content { display: flex; align-items: center; gap: 15px; }
+            .option-content i { font-size: 24px; color: #28a745; }
+            .option-content strong { font-size: 16px; margin-bottom: 5px; }
+            .option-content p { margin: 0; font-size: 14px; color: #666; }
+            .scope-options label {
+                display: block;
+                margin: 8px 0;
+                padding: 8px 0;
+                cursor: pointer;
+            }
+            .scope-options input[type="checkbox"] { margin-right: 10px; }
+        `;
+        document.head.appendChild(styles);
     }
 
     // UI Helper mit Performance-Verbesserungen

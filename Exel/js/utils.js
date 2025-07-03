@@ -296,17 +296,107 @@ class Utils {
         }
     }
 
-    // Notification Utilities
+    // Notification System
     static showNotification(message, type = 'info', duration = 3000) {
-        const notification = this.createElement('div', `notification ${type}`);
-        notification.innerHTML = `<div>${message}</div>`;
+        // Remove existing notifications
+        const existingNotifications = document.querySelectorAll('.notification');
+        existingNotifications.forEach(n => n.remove());
+        
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type}`;
+        notification.innerHTML = `
+            <div class="notification-content">
+                <i class="fas fa-${this.getNotificationIcon(type)}"></i>
+                <span class="notification-message">${message}</span>
+                <button class="notification-close">&times;</button>
+            </div>
+        `;
+        
+        // Add styles if not already present
+        if (!document.querySelector('#notification-styles')) {
+            const styles = document.createElement('style');
+            styles.id = 'notification-styles';
+            styles.textContent = `
+                .notification {
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: white;
+                    border-radius: 8px;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                    border-left: 4px solid #007bff;
+                    z-index: 10000;
+                    min-width: 300px;
+                    max-width: 500px;
+                    animation: slideIn 0.3s ease-out;
+                }
+                .notification-success { border-left-color: #28a745; }
+                .notification-warning { border-left-color: #ffc107; }
+                .notification-error { border-left-color: #dc3545; }
+                .notification-content {
+                    padding: 16px;
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                }
+                .notification-message {
+                    flex: 1;
+                    font-size: 14px;
+                    color: #333;
+                }
+                .notification-close {
+                    background: none;
+                    border: none;
+                    font-size: 18px;
+                    cursor: pointer;
+                    color: #999;
+                    padding: 0;
+                    width: 20px;
+                    height: 20px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                .notification-close:hover {
+                    color: #333;
+                }
+                @keyframes slideIn {
+                    from {
+                        transform: translateX(100%);
+                        opacity: 0;
+                    }
+                    to {
+                        transform: translateX(0);
+                        opacity: 1;
+                    }
+                }
+            `;
+            document.head.appendChild(styles);
+        }
         
         document.body.appendChild(notification);
         
-        setTimeout(() => {
-            notification.style.animation = 'slideOutRight 0.3s ease forwards';
-            setTimeout(() => notification.remove(), 300);
-        }, duration);
+        // Close button functionality
+        const closeBtn = notification.querySelector('.notification-close');
+        const closeNotification = () => notification.remove();
+        closeBtn.addEventListener('click', closeNotification);
+        
+        // Auto-close after duration
+        if (duration > 0) {
+            setTimeout(closeNotification, duration);
+        }
+        
+        return notification;
+    }
+    
+    static getNotificationIcon(type) {
+        const icons = {
+            'success': 'check-circle',
+            'warning': 'exclamation-triangle',
+            'error': 'times-circle',
+            'info': 'info-circle'
+        };
+        return icons[type] || 'info-circle';
     }
 
     // Table Utilities
@@ -473,4 +563,28 @@ window.formatNumber = Utils.formatNumber;
 window.showNotification = Utils.showNotification.bind(Utils);
 window.createElement = Utils.createElement;
 window.validateNumber = Utils.validateNumber;
-window.validateString = Utils.validateString; 
+window.validateString = Utils.validateString;
+
+// Mache Utility-Funktionen global verfügbar (für Kompatibilität)
+window.formatCurrency = Utils.formatCurrency;
+window.formatNumber = Utils.formatNumber;
+window.showNotification = Utils.showNotification.bind(Utils);
+
+// Stelle sicher dass formatCurrency verfügbar ist
+if (!window.formatCurrency) {
+    window.formatCurrency = function(amount) {
+        return new Intl.NumberFormat('de-DE', {
+            style: 'currency',
+            currency: 'EUR'
+        }).format(amount || 0);
+    };
+}
+
+// Stelle sicher dass showNotification verfügbar ist
+if (!window.showNotification) {
+    window.showNotification = function(message, type) {
+        console.log(`[${type}] ${message}`);
+    };
+}
+
+console.log('Utils-Modul geladen und globale Funktionen verfügbar'); 

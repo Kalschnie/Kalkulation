@@ -805,5 +805,5 @@ class AusfuehrungModule {
     }
 }
 
-// Initialize Ausfuehrung Module
-window.ausfuehrungModule = new AusfuehrungModule(); 
+// Export for global access
+window.AusfuehrungModule = AusfuehrungModule; 

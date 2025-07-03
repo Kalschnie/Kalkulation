@@ -509,5 +509,5 @@ class HistorieModule {
     }
 }
 
-// Initialize Historie Module
-window.historieModule = new HistorieModule(); 
+// Export for global access
+window.HistorieModule = HistorieModule; 

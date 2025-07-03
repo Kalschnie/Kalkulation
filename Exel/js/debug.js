@@ -1,9 +1,39 @@
 /**
- * Debug-Script für Kalkulationstool
- * Überprüft Module-Initialisierung und DOM-Verfügbarkeit
+ * Debug Module
+ * Einfache Debug-Funktionen für Entwicklung
  */
 
 console.log('=== Kalkulationstool Debug ===');
+console.log('Debug-Modus aktiviert');
+console.log('Verfügbare Module werden geladen...');
+
+// Einfache Debug-Funktionen
+window.debugApp = {
+    showProjects: function() {
+        console.log('Projekte:', window.app?.projects);
+    },
+    
+    showCurrentProject: function() {
+        console.log('Aktuelles Projekt:', window.app?.currentProject);
+    },
+    
+    listModules: function() {
+        console.log('Geladene Module:', {
+            app: !!window.app,
+            projectsModule: !!window.projectsModule,
+            kalkulationModule: !!window.kalkulationModule,
+            baukostenModule: !!window.baukostenModule,
+            liquiditaetModule: !!window.liquiditaetModule,
+            ausfuehrungModule: !!window.ausfuehrungModule,
+            historieModule: !!window.historieModule
+        });
+    }
+};
+
+/**
+ * Debug-Script für Kalkulationstool
+ * Überprüft Module-Initialisierung und DOM-Verfügbarkeit
+ */
 
 // Prüfe ob alle Module geladen sind
 function checkModules() {

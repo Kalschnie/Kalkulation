@@ -13,7 +13,10 @@ class ProjectsModule {
     init() {
         try {
             this.setupEventListeners();
-            this.renderProjects();
+            // Warte kurz, bevor versucht wird zu rendern
+            setTimeout(() => {
+                this.refreshWhenReady();
+            }, 100);
         } catch (error) {
             Utils.handleError(error, 'Projects Module Initialization');
         }
@@ -40,6 +43,12 @@ class ProjectsModule {
 
     renderProjects() {
         try {
+            // Sicherheitscheck - nicht rendern wenn App nicht bereit
+            if (!window.app || !window.app.projects || !Array.isArray(window.app.projects)) {
+                console.log('App nicht bereit für Project-Rendering');
+                return;
+            }
+            
             const container = Utils.findElement('.projects-grid');
             const template = container?.querySelector('.project-card.template');
             
@@ -69,6 +78,11 @@ class ProjectsModule {
     }
 
     getFilteredProjects() {
+        if (!window.app || !window.app.projects) {
+            console.log('App or projects not ready yet');
+            return [];
+        }
+        
         return window.app.projects.filter(project => {
             const matchesSearch = !this.currentFilter.search || 
                 project.name.toLowerCase().includes(this.currentFilter.search.toLowerCase()) ||
@@ -682,7 +696,29 @@ class ProjectsModule {
             '700': { name: 'Baunebenkosten', betrag: 600000, hinweise: '~15% der Baukosten' }
         };
     }
+
+    // Safe method to refresh projects when app is ready
+    refreshWhenReady() {
+        let attempts = 0;
+        const maxAttempts = 50; // Maximal 5 Sekunden warten
+        
+        const checkAndRender = () => {
+            attempts++;
+            
+            if (window.app && window.app.projects && Array.isArray(window.app.projects)) {
+                console.log('App bereit, rendere Projekte');
+                this.renderProjects();
+            } else if (attempts < maxAttempts) {
+                // Versuche es erneut nach 100ms
+                setTimeout(checkAndRender, 100);
+            } else {
+                console.log('App nicht bereit nach maximalen Versuchen');
+            }
+        };
+        
+        checkAndRender();
+    }
 }
 
-// Initialize Projects Module
-window.projectsModule = new ProjectsModule(); 
+// Export for global access
+window.ProjectsModule = ProjectsModule; 

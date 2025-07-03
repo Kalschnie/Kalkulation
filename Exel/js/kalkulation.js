@@ -1110,5 +1110,5 @@ class KalkulationModule {
     }
 }
 
-// Initialize Kalkulation Module
-window.kalkulationModule = new KalkulationModule(); 
+// Export for global access
+window.KalkulationModule = KalkulationModule; 

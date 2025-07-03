@@ -395,7 +395,9 @@
     </div>
 
     <!-- Scripts -->
+    <script src="js/constants.js"></script>
     <script src="js/utils.js"></script>
+    <script src="js/excel-export.js"></script>
     <script src="js/app.js"></script>
     <script src="js/projects.js"></script>
     <script src="js/kalkulation.js"></script>
@@ -406,41 +408,62 @@
     <script src="js/debug.js"></script>
     
     <script>
-        // App-Initialisierung sicherstellen
+        // Einfache und sichere Initialisierung
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM Content Loaded - Initialisiere App...');
+            console.log('Starte App-Initialisierung...');
             
-            // Warte kurz, damit alle Module geladen sind
             setTimeout(function() {
-                if (!window.app) {
-                    console.log('Erstelle App-Instanz...');
+                try {
+                    // 1. Hauptapp erstellen
+                    console.log('Erstelle App...');
                     window.app = new App();
-                }
-                
-                console.log('App initialisiert:', window.app);
-                
-                // Teste Add Project Button
-                const addBtn = document.querySelector('#add-project-btn');
-                if (addBtn) {
-                    console.log('Add Project Button gefunden');
                     
-                    // Entferne alte Event Listener und füge neuen hinzu
-                    addBtn.onclick = function(e) {
-                        e.preventDefault();
-                        console.log('Add Project Button geklickt!');
-                        
-                        if (window.projectsModule) {
-                            console.log('Rufe showProjectModal auf...');
-                            window.projectsModule.showProjectModal();
-                        } else {
-                            console.error('Projects Module nicht verfügbar!');
-                            alert('Projects Module nicht verfügbar. Bitte Seite neu laden.');
+                    setTimeout(function() {
+                        try {
+                            // 2. Module erstellen (nur wenn Klassen existieren)
+                            console.log('Erstelle Module...');
+                            
+                            if (window.ProjectsModule) {
+                                window.projectsModule = new ProjectsModule();
+                                console.log('✓ ProjectsModule');
+                            }
+                            
+                            if (window.KalkulationModule) {
+                                window.kalkulationModule = new KalkulationModule();
+                                console.log('✓ KalkulationModule');
+                            }
+                            
+                            if (window.BaukostenModule) {
+                                window.baukostenModule = new BaukostenModule();
+                                console.log('✓ BaukostenModule');
+                            }
+                            
+                            if (window.LiquiditaetModule) {
+                                window.liquiditaetModule = new LiquiditaetModule();
+                                console.log('✓ LiquiditaetModule');
+                            }
+                            
+                            if (window.AusfuehrungModule) {
+                                window.ausfuehrungModule = new AusfuehrungModule();
+                                console.log('✓ AusfuehrungModule');
+                            }
+                            
+                            if (window.HistorieModule) {
+                                window.historieModule = new HistorieModule();
+                                console.log('✓ HistorieModule');
+                            }
+                            
+                            console.log('Alle Module geladen');
+                            
+                        } catch (error) {
+                            console.error('Fehler bei Module-Erstellung:', error);
                         }
-                    };
-                } else {
-                    console.error('Add Project Button nicht gefunden!');
+                    }, 1000);
+                    
+                } catch (error) {
+                    console.error('Fehler bei App-Erstellung:', error);
                 }
-            }, 100);
+            }, 500);
         });
     </script>
 </body>
