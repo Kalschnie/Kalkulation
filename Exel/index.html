@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalkulationstool - Baukosten Management</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <h1><i class="fas fa-calculator"></i> Kalkulationstool</h1>
+                <div class="header-actions">
+                    <button id="save-btn" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Speichern
+                    </button>
+                    <button id="load-btn" class="btn btn-secondary">
+                        <i class="fas fa-upload"></i> Laden
+                    </button>
+                    <button id="export-btn" class="btn btn-info">
+                        <i class="fas fa-download"></i> Export
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="main-nav">
+            <div class="nav-tabs">
+                <button class="nav-tab active" data-module="projects">
+                    <i class="fas fa-building"></i> Projekte
+                </button>
+                <button class="nav-tab" data-module="kalkulation">
+                    <i class="fas fa-calculator"></i> Kalkulation KG100-800
+                </button>
+                <button class="nav-tab" data-module="baukosten">
+                    <i class="fas fa-hammer"></i> Baukosten KG300-400
+                </button>
+                <button class="nav-tab" data-module="liquiditaet">
+                    <i class="fas fa-chart-line"></i> Liquiditätsplanung
+                </button>
+                <button class="nav-tab" data-module="ausfuehrung">
+                    <i class="fas fa-tasks"></i> Ausführung
+                </button>
+                <button class="nav-tab" data-module="historie">
+                    <i class="fas fa-history"></i> Verlauf
+                </button>
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Projects Module -->
+            <div id="projects-module" class="module active">
+                <div class="module-header">
+                    <h2>Projektverwaltung</h2>
+                    <button id="add-project-btn" class="btn btn-success">
+                        <i class="fas fa-plus"></i> Neues Projekt
+                    </button>
+                </div>
+                
+                <div class="projects-grid">
+                    <div class="project-card template">
+                        <div class="project-header">
+                            <h3 class="project-name">Projektname</h3>
+                            <div class="project-actions">
+                                <button class="btn-icon edit-project" title="Bearbeiten">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn-icon delete-project" title="Löschen">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="project-details">
+                            <div class="detail-row">
+                                <span class="label">Status:</span>
+                                <span class="project-status">Planung</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">BGF:</span>
+                                <span class="project-bgf">0 m²</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">Gesamtkosten:</span>
+                                <span class="project-cost">0 €</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">Erstellt:</span>
+                                <span class="project-date">-</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary open-project">Öffnen</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Kalkulation KG100-800 Module -->
+            <div id="kalkulation-module" class="module">
+                <div class="module-header">
+                    <h2>Kalkulation KG100-800</h2>
+                    <div class="kalkulation-info">
+                        <span id="current-project-name">Kein Projekt ausgewählt</span>
+                        <button id="reference-calc-btn" class="btn btn-info">
+                            <i class="fas fa-copy"></i> Referenzkalkulation
+                        </button>
+                        <button id="add-kostengruppe-btn" class="btn btn-success">
+                            <i class="fas fa-plus"></i> Kostengruppe hinzufügen
+                        </button>
+                    </div>
+                </div>
+
+                <div class="kennzahlen-section">
+                    <h3>Projektdaten und Kennzahlen</h3>
+                    <div class="kennzahlen-grid">
+                        <div class="kennzahl-item">
+                            <label>BGF (m²):</label>
+                            <input type="number" id="bgf-input" step="0.01">
+                        </div>
+                        <div class="kennzahl-item">
+                            <label>BRI (m³):</label>
+                            <input type="number" id="bri-input" step="0.01">
+                        </div>
+                        <div class="kennzahl-item">
+                            <label>WFL (m²):</label>
+                            <input type="number" id="wfl-input" step="0.01">
+                        </div>
+                        <div class="kennzahl-item">
+                            <label>Grundstücksfläche (m²):</label>
+                            <input type="number" id="grundstuecksflaeche-input" step="0.01">
+                        </div>
+                        <div class="kennzahl-item">
+                            <label>WE (Anzahl):</label>
+                            <input type="number" id="we-input" step="1">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="kostengruppen-section">
+                    <div class="table-container">
+                        <table id="kg-table" class="calculation-table">
+                            <thead>
+                                <tr>
+                                    <th>KG</th>
+                                    <th>Positionsbezeichnung</th>
+                                    <th>Gesamt (€)</th>
+                                    <th>€/BGF</th>
+                                    <th>€/BRI</th>
+                                    <th>€/WFL</th>
+                                    <th>€/WE</th>
+                                    <th>Hinweise</th>
+                                    <th>Aktionen</th>
+                                </tr>
+                            </thead>
+                            <tbody id="kg-tbody">
+                                <!-- Kostengruppen werden dynamisch geladen -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Baukosten KG300-400 Module -->
+            <div id="baukosten-module" class="module">
+                <div class="module-header">
+                    <h2>Baukosten KG300-400 (Gewerkeweise)</h2>
+                    <div class="baukosten-actions">
+                        <button id="add-gewerk-btn" class="btn btn-success">
+                            <i class="fas fa-plus"></i> Gewerk hinzufügen
+                        </button>
+                        <button id="compare-versions-btn" class="btn btn-info">
+                            <i class="fas fa-balance-scale"></i> Versionen vergleichen
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table id="baukosten-table" class="calculation-table">
+                        <thead>
+                            <tr>
+                                <th>Nr.</th>
+                                <th>Gewerk</th>
+                                <th>Kalkulation (€)</th>
+                                <th>Vergabe (€)</th>
+                                <th>Mehr-/Minderkosten (€)</th>
+                                <th>Abzüge/Skonto (€)</th>
+                                <th>Netto Endkosten (€)</th>
+                                <th>Hinweise</th>
+                                <th>Aktionen</th>
+                            </tr>
+                        </thead>
+                        <tbody id="baukosten-tbody">
+                            <!-- Gewerke werden dynamisch geladen -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Liquiditätsplanung Module -->
+            <div id="liquiditaet-module" class="module">
+                <div class="module-header">
+                    <h2>Liquiditätsplanung</h2>
+                    <div class="liquiditaet-actions">
+                        <button id="generate-liquiditaet-btn" class="btn btn-primary">
+                            <i class="fas fa-magic"></i> Automatisch generieren
+                        </button>
+                        <button id="export-liquiditaet-btn" class="btn btn-info">
+                            <i class="fas fa-file-excel"></i> Excel Export
+                        </button>
+                    </div>
+                </div>
+
+                <div class="liquiditaet-settings">
+                    <div class="settings-row">
+                        <label>Projektstart:</label>
+                        <input type="date" id="project-start-date">
+                        
+                        <label>Projektdauer (Monate):</label>
+                        <input type="number" id="project-duration" min="1" value="24">
+                        
+                        <label>Planungsphase (Monate):</label>
+                        <input type="number" id="planning-duration" min="1" value="6">
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table id="liquiditaet-table" class="calculation-table">
+                        <thead>
+                            <tr>
+                                <th>KG/Position</th>
+                                <th>Gesamt (€)</th>
+                                <th class="quarter-header">Q1</th>
+                                <th class="quarter-header">Q2</th>
+                                <th class="quarter-header">Q3</th>
+                                <th class="quarter-header">Q4</th>
+                                <!-- Weitere Quartale werden dynamisch hinzugefügt -->
+                            </tr>
+                        </thead>
+                        <tbody id="liquiditaet-tbody">
+                            <!-- Liquiditätsplanung wird dynamisch generiert -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Ausführung Module -->
+            <div id="ausfuehrung-module" class="module">
+                <div class="module-header">
+                    <h2>Ausführung & Bauabrechnung</h2>
+                    <button id="add-contract-btn" class="btn btn-success">
+                        <i class="fas fa-file-contract"></i> Vertrag hinzufügen
+                    </button>
+                </div>
+
+                <div class="contracts-section">
+                    <h3>Verträge und Rechnungen</h3>
+                    <div class="table-container">
+                        <table id="contracts-table" class="calculation-table">
+                            <thead>
+                                <tr>
+                                    <th>Vertrag Nr.</th>
+                                    <th>Gewerk/Position</th>
+                                    <th>Vertragssumme (€)</th>
+                                    <th>Bezahlt (€)</th>
+                                    <th>Offen (€)</th>
+                                    <th>Status</th>
+                                    <th>Aktionen</th>
+                                </tr>
+                            </thead>
+                            <tbody id="contracts-tbody">
+                                <!-- Verträge werden dynamisch geladen -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="gf-liste-section">
+                    <h3>GF-Liste (Detailbetrachtung)</h3>
+                    <div class="table-container">
+                        <table id="gf-liste-table" class="calculation-table">
+                            <thead>
+                                <tr>
+                                    <th>Position</th>
+                                    <th>Kalkulation (€)</th>
+                                    <th>Vergabe (€)</th>
+                                    <th>Abweichung (€)</th>
+                                    <th>Abweichung (%)</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="gf-liste-tbody">
+                                <!-- GF-Liste wird dynamisch generiert -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Historie Module -->
+            <div id="historie-module" class="module">
+                <div class="module-header">
+                    <h2>Verlauf und Versionierung</h2>
+                    <div class="historie-actions">
+                        <button id="create-snapshot-btn" class="btn btn-primary">
+                            <i class="fas fa-camera"></i> Snapshot erstellen
+                        </button>
+                        <button id="compare-snapshots-btn" class="btn btn-info">
+                            <i class="fas fa-code-compare"></i> Vergleichen
+                        </button>
+                    </div>
+                </div>
+
+                <div class="snapshots-section">
+                    <div class="snapshots-grid" id="snapshots-grid">
+                        <!-- Snapshots werden dynamisch geladen -->
+                    </div>
+                </div>
+
+                <div class="changelog-section">
+                    <h3>Änderungsprotokoll</h3>
+                    <div class="changelog-container" id="changelog-container">
+                        <!-- Änderungslog wird dynamisch geladen -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div id="project-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Projekt bearbeiten</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="project-form">
+                    <div class="form-group">
+                        <label>Projektname:</label>
+                        <input type="text" id="project-name-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Status:</label>
+                        <select id="project-status-input">
+                            <option value="Planung">Planung</option>
+                            <option value="Genehmigung">Genehmigung</option>
+                            <option value="Ausführung">Ausführung</option>
+                            <option value="Abgeschlossen">Abgeschlossen</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Beschreibung:</label>
+                        <textarea id="project-description-input" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="cancel-project-btn">Abbrechen</button>
+                <button type="button" class="btn btn-primary" id="save-project-btn">Speichern</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="reference-modal" class="modal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3>Referenzkalkulation basierend auf Kennzahlen</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="reference-selection">
+                    <h4>Referenzprojekte auswählen (max. 3):</h4>
+                    <div id="reference-projects-list">
+                        <!-- Referenzprojekte werden dynamisch geladen -->
+                    </div>
+                </div>
+                <div class="reference-preview">
+                    <h4>Kalkulation Vorschau:</h4>
+                    <div id="reference-preview-table">
+                        <!-- Vorschau wird dynamisch generiert -->
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary">Abbrechen</button>
+                <button type="button" class="btn btn-primary" id="apply-reference-btn">Übernehmen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/utils.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/projects.js"></script>
+    <script src="js/kalkulation.js"></script>
+    <script src="js/baukosten.js"></script>
+    <script src="js/liquiditaet.js"></script>
+    <script src="js/ausfuehrung.js"></script>
+    <script src="js/historie.js"></script>
+    <script src="js/debug.js"></script>
+    
+    <script>
+        // App-Initialisierung sicherstellen
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM Content Loaded - Initialisiere App...');
+            
+            // Warte kurz, damit alle Module geladen sind
+            setTimeout(function() {
+                if (!window.app) {
+                    console.log('Erstelle App-Instanz...');
+                    window.app = new App();
+                }
+                
+                console.log('App initialisiert:', window.app);
+                
+                // Teste Add Project Button
+                const addBtn = document.querySelector('#add-project-btn');
+                if (addBtn) {
+                    console.log('Add Project Button gefunden');
+                    
+                    // Entferne alte Event Listener und füge neuen hinzu
+                    addBtn.onclick = function(e) {
+                        e.preventDefault();
+                        console.log('Add Project Button geklickt!');
+                        
+                        if (window.projectsModule) {
+                            console.log('Rufe showProjectModal auf...');
+                            window.projectsModule.showProjectModal();
+                        } else {
+                            console.error('Projects Module nicht verfügbar!');
+                            alert('Projects Module nicht verfügbar. Bitte Seite neu laden.');
+                        }
+                    };
+                } else {
+                    console.error('Add Project Button nicht gefunden!');
+                }
+            }, 100);
+        });
+    </script>
+</body>
+</html>

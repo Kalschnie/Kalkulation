@@ -1,0 +1,1251 @@
+/* Reset and Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    background-color: #fafbfc;
+    color: #2d3436;
+    line-height: 1.6;
+    font-size: 14px;
+}
+
+/* Modern Color Palette */
+:root {
+    --primary-color: #0066cc;
+    --primary-hover: #0052a3;
+    --secondary-color: #6c757d;
+    --success-color: #28a745;
+    --warning-color: #ffc107;
+    --danger-color: #dc3545;
+    --info-color: #17a2b8;
+    
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8f9fa;
+    --bg-tertiary: #e9ecef;
+    
+    --text-primary: #2d3436;
+    --text-secondary: #636e72;
+    --text-muted: #95a5a6;
+    
+    --border-color: #dee2e6;
+    --border-radius: 8px;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+    --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+}
+
+/* App Container */
+.app-container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header */
+.app-header {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+}
+
+.header-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header-content h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.header-content h1 i {
+    margin-right: 0.5rem;
+    color: var(--primary-color);
+}
+
+.header-actions {
+    display: flex;
+    gap: 0.75rem;
+}
+
+/* Navigation */
+.main-nav {
+    background: var(--bg-primary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.nav-tabs {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    display: flex;
+    overflow-x: auto;
+}
+
+.nav-tab {
+    background: none;
+    border: none;
+    padding: 1rem 1.5rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.nav-tab:hover {
+    color: var(--primary-color);
+    background-color: var(--bg-secondary);
+}
+
+.nav-tab.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+    background-color: var(--bg-secondary);
+}
+
+/* Main Content */
+.main-content {
+    flex: 1;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+    width: 100%;
+}
+
+.module {
+    display: none;
+    animation: fadeIn 0.3s ease-in;
+}
+
+.module.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.module-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.module-header h2 {
+    color: var(--text-primary);
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+/* Modern Button Styles */
+.btn {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 0.625rem 1.25rem;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    line-height: 1.4;
+}
+
+.btn:hover {
+    background: var(--primary-hover);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
+.btn-secondary {
+    background: var(--secondary-color);
+}
+
+.btn-secondary:hover {
+    background: #5a6268;
+}
+
+.btn-success {
+    background: var(--success-color);
+}
+
+.btn-success:hover {
+    background: #218838;
+}
+
+.btn-info {
+    background: var(--info-color);
+}
+
+.btn-info:hover {
+    background: #138496;
+}
+
+.btn-warning {
+    background: var(--warning-color);
+    color: var(--text-primary);
+}
+
+.btn-warning:hover {
+    background: #e0a800;
+}
+
+.btn-danger {
+    background: var(--danger-color);
+}
+
+.btn-danger:hover {
+    background: #c82333;
+}
+
+.btn-sm {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+}
+
+.btn-icon {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+}
+
+.btn-icon:hover {
+    background-color: var(--bg-secondary);
+    color: var(--primary-color);
+}
+
+/* Projects Grid */
+.projects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.project-card {
+    background: var(--bg-primary);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.2s ease;
+    border: 1px solid var(--border-color);
+}
+
+.project-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.project-card.template {
+    display: none;
+}
+
+.project-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.project-name {
+    color: var(--text-primary);
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin: 0;
+    flex: 1;
+}
+
+.project-actions {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.project-details {
+    margin-bottom: 1.5rem;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    padding: 0.25rem 0;
+}
+
+.detail-row .label {
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.project-status {
+    color: var(--primary-color);
+    font-weight: 500;
+}
+
+/* Tables */
+.table-container {
+    background: var(--bg-primary);
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    margin-top: 1rem;
+    border: 1px solid var(--border-color);
+    
+    /* Horizontales Scrolling für breite Tabellen */
+    overflow-x: auto;
+    overflow-y: visible;
+    position: relative;
+}
+
+.calculation-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+    position: relative;
+}
+
+/* Spezielle Mindestbreite für Liquiditätstabelle */
+#liquiditaet-table {
+    min-width: 1400px;
+}
+
+#liquiditaet-table .calculation-table {
+    min-width: 1400px;
+}
+
+.calculation-table th {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    padding: 1rem 0.75rem;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    box-shadow: 0 2px 2px rgba(0,0,0,0.1);
+}
+
+/* Sticky erste Spalte (KGR) */
+.calculation-table th:first-child,
+.calculation-table td:first-child {
+    position: sticky;
+    left: 0;
+    background: var(--bg-primary);
+    z-index: 5;
+    border-right: 2px solid var(--border-color);
+    min-width: 60px;
+    text-align: center;
+}
+
+.calculation-table th:first-child {
+    z-index: 15;
+    background: var(--bg-tertiary);
+}
+
+/* Sticky zweite Spalte (Positionsbezeichnung) */
+.calculation-table th:nth-child(2),
+.calculation-table td:nth-child(2) {
+    position: sticky;
+    left: 60px;
+    background: var(--bg-primary);
+    z-index: 5;
+    border-right: 1px solid var(--border-color);
+    min-width: 250px;
+    max-width: 350px;
+    word-wrap: break-word;
+}
+
+.calculation-table th:nth-child(2) {
+    z-index: 15;
+    background: var(--bg-tertiary);
+}
+
+.calculation-table td {
+    padding: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+    vertical-align: middle;
+}
+
+.calculation-table tbody tr:hover {
+    background-color: var(--bg-secondary);
+}
+
+.calculation-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.calculation-table input,
+.calculation-table select,
+.calculation-table textarea {
+    width: 100%;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 0.5rem;
+    font-size: 0.875rem;
+    transition: border-color 0.2s ease;
+}
+
+.calculation-table input:focus,
+.calculation-table select:focus,
+.calculation-table textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+}
+
+/* Kennzahlen Section */
+.kennzahlen-section {
+    background: var(--bg-primary);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
+}
+
+.kennzahlen-section h3 {
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+    font-size: 1.125rem;
+    font-weight: 600;
+}
+
+.kennzahlen-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.kennzahl-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.kennzahl-item label {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+.kennzahl-item input {
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    font-size: 0.875rem;
+    transition: border-color 0.2s ease;
+}
+
+.kennzahl-item input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+}
+
+/* Liquiditäts Settings */
+.liquiditaet-settings {
+    background: var(--bg-primary);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
+}
+
+.settings-row {
+    display: flex;
+    gap: 2rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.settings-row label {
+    font-weight: 500;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    font-size: 0.875rem;
+}
+
+.settings-row input {
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 0.875rem;
+}
+
+/* Quarter Headers */
+.quarter-header {
+    background: var(--primary-color) !important;
+    color: white !important;
+    min-width: 100px;
+    text-align: center !important;
+}
+
+/* Modals */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    backdrop-filter: blur(4px);
+    transition: opacity 0.2s ease;
+}
+
+.modal.show {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: modalFadeIn 0.3s ease;
+}
+
+@keyframes modalFadeIn {
+    from { 
+        opacity: 0;
+        backdrop-filter: blur(0px);
+    }
+    to { 
+        opacity: 1;
+        backdrop-filter: blur(4px);
+    }
+}
+
+.modal-content {
+    background: var(--bg-primary);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-lg);
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: modalSlideIn 0.3s ease;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    position: relative;
+}
+
+.modal-content.large {
+    max-width: 800px;
+}
+
+@keyframes modalSlideIn {
+    from { 
+        transform: translateY(-50px) scale(0.9);
+        opacity: 0;
+    }
+    to { 
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    background-color: var(--bg-secondary);
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+}
+
+.modal-header h3 {
+    color: var(--text-primary);
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--text-secondary);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    line-height: 1;
+}
+
+.modal-close:hover {
+    background-color: var(--danger-color);
+    color: white;
+    transform: scale(1.1);
+}
+
+.modal-close:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+.modal-body {
+    padding: 1.5rem;
+    max-height: calc(90vh - 200px);
+    overflow-y: auto;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    padding: 1.5rem;
+    border-top: 1px solid var(--border-color);
+    background-color: var(--bg-secondary);
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
+}
+
+.modal-footer .btn {
+    min-width: 100px;
+}
+
+/* Form Groups */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    font-size: 0.875rem;
+    transition: border-color 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+}
+
+/* Snapshots Grid */
+.snapshots-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.snapshot-card {
+    background: var(--bg-primary);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
+    transition: all 0.2s ease;
+}
+
+.snapshot-card:hover {
+    box-shadow: var(--shadow-md);
+}
+
+.snapshot-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.snapshot-title {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.snapshot-date {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.snapshot-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+/* Changelog */
+.changelog-container {
+    background: var(--bg-primary);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.changelog-entry {
+    padding: 0.75rem;
+    border-left: 3px solid var(--primary-color);
+    margin-bottom: 1rem;
+    background: var(--bg-secondary);
+    border-radius: 0 var(--border-radius) var(--border-radius) 0;
+}
+
+.changelog-date {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 0.25rem;
+}
+
+.changelog-message {
+    color: var(--text-primary);
+    font-size: 0.875rem;
+}
+
+/* Reference Projects */
+.reference-projects-list {
+    display: grid;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.reference-project-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.reference-project-item:hover {
+    border-color: var(--primary-color);
+    background-color: var(--bg-secondary);
+}
+
+.reference-project-item.selected {
+    border-color: var(--primary-color);
+    background-color: rgba(0, 102, 204, 0.05);
+}
+
+.reference-project-item input[type="checkbox"] {
+    margin-right: 1rem;
+}
+
+.reference-project-details {
+    flex: 1;
+}
+
+.reference-project-name {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.reference-project-metrics {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-top: 0.25rem;
+}
+
+/* Status Indicators */
+.status-planning { color: var(--warning-color); }
+.status-approval { color: var(--info-color); }
+.status-execution { color: var(--warning-color); }
+.status-completed { color: var(--success-color); }
+
+/* Cost Group Styling */
+.kg-main {
+    background-color: var(--bg-secondary);
+    font-weight: 500;
+}
+
+.kg-main:hover {
+    background-color: var(--bg-tertiary);
+}
+
+.kg-subgroup {
+    transition: all 0.3s ease;
+}
+
+.kg-subgroup.collapsed {
+    opacity: 0.9;
+}
+
+.kg-subgroup .kg-subname {
+    padding-left: 1.5rem;
+    color: var(--text-secondary);
+}
+
+.kg-subgroup td {
+    background-color: var(--bg-primary);
+}
+
+.kg-subgroup:hover td {
+    background-color: var(--bg-secondary);
+}
+
+/* Totals Row */
+.totals-row {
+    background-color: var(--bg-tertiary) !important;
+    font-weight: 600 !important;
+    border-top: 2px solid var(--border-color) !important;
+}
+
+/* Liquiditätstabelle - Erweiterte Strukturung */
+.kg-group-row {
+    background-color: var(--bg-secondary);
+    font-weight: bold;
+}
+
+.kg-subgroup-row {
+    background-color: rgba(108, 117, 125, 0.1);
+}
+
+.kg-main-row {
+    background-color: white;
+}
+
+.kg-group-row .quarter-input.group-input {
+    background-color: rgba(108, 117, 125, 0.1);
+    border: none;
+    font-weight: bold;
+    text-align: center;
+    pointer-events: none;
+}
+
+.cumulative-row {
+    background-color: rgba(0, 123, 255, 0.1);
+    border-top: 2px solid var(--primary-color);
+}
+
+.cumulative-row td {
+    font-style: italic;
+}
+
+.quarter-cumulative {
+    background-color: rgba(0, 123, 255, 0.15);
+    font-weight: bold;
+}
+
+.cumulative-final {
+    background-color: rgba(0, 123, 255, 0.2);
+    font-weight: bold;
+    border-left: 2px solid var(--primary-color);
+}
+
+.total-sum {
+    background-color: rgba(40, 167, 69, 0.1);
+    font-weight: bold;
+    border-left: 2px solid var(--success-color);
+}
+
+.kg-designation {
+    text-align: center;
+    font-weight: bold;
+    min-width: 60px;
+}
+
+.quarter-input {
+    text-align: center;
+    max-width: 120px;
+    font-size: 0.875rem;
+}
+
+.quarter-input[readonly] {
+    background-color: var(--bg-tertiary);
+    border: none;
+    color: var(--text-primary);
+}
+
+.kg-sum {
+    text-align: right;
+    font-weight: 500;
+}
+
+.text-warning {
+    color: var(--warning-color) !important;
+}
+
+/* Hover-Effekte für Tabellen-Zeilen */
+.calculation-table tbody tr:hover:not(.totals-row):not(.cumulative-row) {
+    background-color: rgba(0, 123, 255, 0.05);
+}
+
+/* Liquiditätstabelle Responsive */
+@media (max-width: 1200px) {
+    .liquiditaet-table {
+        font-size: 0.875rem;
+    }
+    
+    .quarter-input {
+        width: 80px;
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .liquiditaet-settings .settings-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .liquiditaet-table {
+        font-size: 0.75rem;
+    }
+    
+    .quarter-header {
+        writing-mode: vertical-rl;
+        text-orientation: mixed;
+        min-width: 40px;
+    }
+}
+
+/* Print Styles für Liquiditätstabelle */
+@media print {
+    .liquiditaet-actions {
+        display: none;
+    }
+    
+    .liquiditaet-table {
+        font-size: 10pt;
+    }
+    
+    .kg-group-row {
+        background-color: #f8f9fa !important;
+        -webkit-print-color-adjust: exact;
+    }
+    
+    .cumulative-row {
+        background-color: #e3f2fd !important;
+        -webkit-print-color-adjust: exact;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .header-content {
+        padding: 0 1rem;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .nav-tabs {
+        padding: 0 1rem;
+        justify-content: flex-start;
+    }
+
+    .main-content {
+        padding: 1rem;
+        overflow-x: hidden; /* Verhindert horizontales Scrollen des Containers */
+    }
+
+    .module-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .projects-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .kennzahlen-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .settings-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .table-container {
+        /* Tabelle nimmt volle Breite ein und scrollt horizontal */
+        margin-left: -1rem;
+        margin-right: -1rem;
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+    }
+
+    .calculation-table {
+        font-size: 0.75rem;
+    }
+    
+    /* Liquiditätstabelle auf mobilen Geräten */
+    #liquiditaet-table {
+        min-width: 1000px; /* Reduziert für mobile */
+    }
+    
+    /* Sticky Spalten anpassen */
+    .calculation-table th:nth-child(2),
+    .calculation-table td:nth-child(2) {
+        left: 50px; /* Schmalere erste Spalte */
+        min-width: 200px; /* Schmalere zweite Spalte */
+        max-width: 250px;
+    }
+    
+    .calculation-table th:first-child,
+    .calculation-table td:first-child {
+        min-width: 50px; /* Schmalere KGR-Spalte */
+    }
+    
+    /* Quarter-Inputs kleiner */
+    .quarter-input {
+        width: 70px;
+        font-size: 0.7rem;
+        padding: 0.25rem;
+    }
+
+    .modal-content {
+        margin: 0.5rem;
+        width: calc(100% - 1rem);
+        max-height: 95vh;
+    }
+}
+
+/* Tabellen-Container für sehr breite Bildschirme optimieren */
+@media (min-width: 1400px) {
+    .table-container {
+        max-width: calc(100vw - 4rem); /* Verhindert Überlauf */
+    }
+}
+
+/* Spezielle Anpassungen für sehr kleine Bildschirme */
+@media (max-width: 480px) {
+    .main-content {
+        padding: 0.5rem;
+    }
+    
+    .table-container {
+        margin-left: -0.5rem;
+        margin-right: -0.5rem;
+    }
+    
+    .quarter-input {
+        width: 60px;
+        font-size: 0.65rem;
+    }
+    
+    .calculation-table th,
+    .calculation-table td {
+        padding: 0.375rem 0.25rem;
+    }
+    
+    /* Modal auf sehr kleinen Bildschirmen */
+    .modal-content {
+        margin: 0.25rem;
+        width: calc(100% - 0.5rem);
+        max-height: 98vh;
+    }
+    
+    .modal-body {
+        padding: 1rem;
+    }
+    
+    .modal-footer {
+        padding: 1rem;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .modal-footer .btn {
+        width: 100%;
+    }
+}
+
+/* Utility Classes */
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+.text-bold { font-weight: 600; }
+.text-muted { color: var(--text-muted); }
+.text-primary { color: var(--primary-color); }
+.text-success { color: var(--success-color); }
+.text-warning { color: var(--warning-color); }
+.text-danger { color: var(--danger-color); }
+
+.mb-1 { margin-bottom: 0.5rem; }
+.mb-2 { margin-bottom: 1rem; }
+.mb-3 { margin-bottom: 1.5rem; }
+.mt-1 { margin-top: 0.5rem; }
+.mt-2 { margin-top: 1rem; }
+.mt-3 { margin-top: 1.5rem; }
+
+.p-1 { padding: 0.5rem; }
+.p-2 { padding: 1rem; }
+.p-3 { padding: 1.5rem; }
+
+.d-none { display: none; }
+.d-block { display: block; }
+.d-flex { display: flex; }
+.d-grid { display: grid; }
+
+/* Loading Spinner */
+.loading-spinner {
+    border: 3px solid var(--bg-tertiary);
+    border-top: 3px solid var(--primary-color);
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    animation: spin 1s linear infinite;
+    margin: 1rem auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Notifications */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: var(--bg-primary);
+    border-radius: var(--border-radius);
+    padding: 1rem 1.5rem;
+    box-shadow: var(--shadow-lg);
+    border-left: 4px solid var(--primary-color);
+    z-index: 1001;
+    max-width: 300px;
+    animation: slideInRight 0.3s ease;
+    border: 1px solid var(--border-color);
+}
+
+.notification.success { border-left-color: var(--success-color); }
+.notification.warning { border-left-color: var(--warning-color); }
+.notification.error { border-left-color: var(--danger-color); }
+
+@keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--text-muted);
+}
+
+.empty-state p {
+    margin-bottom: 0.5rem;
+}
+
+/* Print Styles */
+@media print {
+    .app-header,
+    .main-nav,
+    .btn,
+    .modal {
+        display: none !important;
+    }
+    
+    .main-content {
+        margin: 0;
+        padding: 0;
+        max-width: none;
+    }
+    
+    .calculation-table {
+        font-size: 0.75rem;
+    }
+    
+    .calculation-table th,
+    .calculation-table td {
+        padding: 0.375rem 0.25rem;
+    }
+}
+
+/* Collapsible Kostengruppen Styles */
+.kg-main .kg-name {
+    transition: background-color 0.2s ease;
+}
+
+.kg-main .kg-name:hover {
+    background-color: var(--bg-secondary);
+    cursor: pointer;
+}
+
+.toggle-icon {
+    transition: transform 0.2s ease;
+    color: var(--primary-color);
+    font-size: 0.8rem;
+}
+
+.toggle-icon:hover {
+    color: var(--primary-hover);
+}
+
+/* Enhanced kennzahlen grid for better spacing */
+.kennzahlen-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+/* Reference project metrics styling */
+.reference-project-metrics {
+    font-size: 0.8rem;
+    line-height: 1.4;
+}
+
+/* Form text styling */
+.form-text {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 0.25rem;
+} 
