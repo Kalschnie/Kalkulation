@@ -235,8 +235,28 @@ class LiquiditaetModule {
         const predefinedKGs = this.getPredefinedKGSettings();
         const result = [];
 
-        // Add all available KGs from project
+        // First, check which combined KGs we can add
+        const combinedKGs = this.getCombinedKGSettings();
+        const usedCombinedKGs = [];
+        const excludedIndividualKGs = new Set();
+
+        combinedKGs.forEach(combined => {
+            const hasAllComponents = combined.combined.every(kgNr => availableKGs.includes(kgNr));
+            if (hasAllComponents) {
+                usedCombinedKGs.push(combined);
+                // Mark individual components as excluded to prevent double counting
+                combined.combined.forEach(kgNr => excludedIndividualKGs.add(kgNr));
+            }
+        });
+
+        // Add individual KGs (excluding those that are part of combined groups)
         availableKGs.forEach(kg => {
+            // Skip if this KG is part of a combined group we're using
+            if (excludedIndividualKGs.has(kg)) {
+                console.log(`Skipping KG ${kg} - included in combined group`);
+                return;
+            }
+
             const predefined = predefinedKGs.find(p => p.nr === kg);
             if (predefined) {
                 // Use predefined settings
@@ -247,15 +267,12 @@ class LiquiditaetModule {
             }
         });
 
-        // Add combined KGs (like 300+400) if their components exist
-        const combinedKGs = this.getCombinedKGSettings();
-        combinedKGs.forEach(combined => {
-            const hasAllComponents = combined.combined.every(kgNr => availableKGs.includes(kgNr));
-            if (hasAllComponents) {
-                result.push(combined);
-            }
+        // Add the combined KGs
+        usedCombinedKGs.forEach(combined => {
+            result.push(combined);
         });
 
+        console.log('KGs for distribution:', result.map(kg => kg.nr).join(', '));
         return result;
     }
 
@@ -627,16 +644,15 @@ class LiquiditaetModule {
             quarters.forEach(quarter => {
                 const amount = kgData.quarters[quarter.id] || 0;
                 quarterSum += amount;
-                const formattedAmount = amount > 0 ? Math.round(amount) : 0;
+                const formattedAmount = amount > 0 ? formatNumberWithThousands(amount, 0) : '';
                 
                 rowHTML += `
                     <td class="quarter-cell">
                         ${isGroup ? '<strong>' : ''}
-                        <input type="number" 
+                        <input type="text" 
                                class="quarter-input ${isGroup ? 'group-input' : ''}" 
                                value="${formattedAmount}" 
-                               step="100"
-                               min="0"
+                               placeholder="0"
                                data-kg="${kgDef.nr}"
                                data-quarter="${quarter.id}"
                                ${isGroup || isCombined ? 'readonly' : ''}>
@@ -663,10 +679,25 @@ class LiquiditaetModule {
             // Add event listeners für editierbare Inputs
             if (!isGroup && !isCombined) {
                 row.querySelectorAll('.quarter-input:not([readonly])').forEach(input => {
+                    // Setup number formatting
                     input.addEventListener('input', (e) => {
+                        let value = e.target.value;
+                        // Remove all non-numeric characters except dots and commas
+                        value = value.replace(/[^0-9.,]/g, '');
+                        e.target.value = value;
+                    });
+
+                    input.addEventListener('blur', (e) => {
                         const kg = e.target.dataset.kg;
                         const quarterId = e.target.dataset.quarter;
-                        const amount = Utils.validateNumber(e.target.value);
+                        const amount = parseGermanNumber(e.target.value) || 0;
+                        
+                        // Format the input value
+                        if (amount > 0) {
+                            e.target.value = formatNumberWithThousands(amount, 0);
+                        } else {
+                            e.target.value = '';
+                        }
                         
                         this.debounceUtils.debounce(() => {
                             this.updateQuarterAmount(kg, quarterId, amount);

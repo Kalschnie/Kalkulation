@@ -31,7 +31,7 @@
         <nav class="main-nav">
             <div class="nav-tabs">
                 <button class="nav-tab active" data-module="projects">
-                    <i class="fas fa-building"></i> Projekte
+                    <i class="fas fa-folder-open"></i> Projekte
                 </button>
                 <button class="nav-tab" data-module="kalkulation">
                     <i class="fas fa-calculator"></i> Kalkulation KG100-800
@@ -43,10 +43,13 @@
                     <i class="fas fa-chart-line"></i> Liquiditätsplanung
                 </button>
                 <button class="nav-tab" data-module="ausfuehrung">
-                    <i class="fas fa-tasks"></i> Ausführung
+                    <i class="fas fa-tasks"></i> Ausführung & Bauabrechnung
                 </button>
                 <button class="nav-tab" data-module="historie">
                     <i class="fas fa-history"></i> Verlauf
+                </button>
+                <button class="nav-tab" data-module="statistiken">
+                    <i class="fas fa-chart-bar"></i> Statistiken
                 </button>
             </div>
         </nav>
@@ -253,51 +256,254 @@
             <div id="ausfuehrung-module" class="module">
                 <div class="module-header">
                     <h2>Ausführung & Bauabrechnung</h2>
-                    <button id="add-contract-btn" class="btn btn-success">
-                        <i class="fas fa-file-contract"></i> Vertrag hinzufügen
-                    </button>
-                </div>
-
-                <div class="contracts-section">
-                    <h3>Verträge und Rechnungen</h3>
-                    <div class="table-container">
-                        <table id="contracts-table" class="calculation-table">
-                            <thead>
-                                <tr>
-                                    <th>Vertrag Nr.</th>
-                                    <th>Gewerk/Position</th>
-                                    <th>Vertragssumme (€)</th>
-                                    <th>Bezahlt (€)</th>
-                                    <th>Offen (€)</th>
-                                    <th>Status</th>
-                                    <th>Aktionen</th>
-                                </tr>
-                            </thead>
-                            <tbody id="contracts-tbody">
-                                <!-- Verträge werden dynamisch geladen -->
-                            </tbody>
-                        </table>
+                    <div class="ausfuehrung-actions">
+                        <button id="add-contract-btn" class="btn btn-success">
+                            <i class="fas fa-file-contract"></i> Vertrag hinzufügen
+                        </button>
+                        <button id="add-invoice-btn" class="btn btn-info">
+                            <i class="fas fa-file-invoice"></i> Rechnung hinzufügen
+                        </button>
+                        <button id="export-execution-btn" class="btn btn-secondary">
+                            <i class="fas fa-file-excel"></i> Exportieren
+                        </button>
                     </div>
                 </div>
 
-                <div class="gf-liste-section">
-                    <h3>GF-Liste (Detailbetrachtung)</h3>
-                    <div class="table-container">
-                        <table id="gf-liste-table" class="calculation-table">
-                            <thead>
-                                <tr>
-                                    <th>Position</th>
-                                    <th>Kalkulation (€)</th>
-                                    <th>Vergabe (€)</th>
-                                    <th>Abweichung (€)</th>
-                                    <th>Abweichung (%)</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody id="gf-liste-tbody">
-                                <!-- GF-Liste wird dynamisch generiert -->
-                            </tbody>
-                        </table>
+                <!-- Project Status Overview -->
+                <div class="execution-overview">
+                    <div class="overview-cards">
+                        <div class="overview-card">
+                            <div class="card-icon">
+                                <i class="fas fa-file-contract"></i>
+                            </div>
+                            <div class="card-content">
+                                <h4>Verträge</h4>
+                                <div class="card-value" id="contracts-count">0</div>
+                                <div class="card-subtext" id="contracts-value">0 €</div>
+                            </div>
+                        </div>
+                        <div class="overview-card">
+                            <div class="card-icon">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="card-content">
+                                <h4>Bezahlt</h4>
+                                <div class="card-value" id="paid-value">0 €</div>
+                                <div class="card-subtext" id="paid-percentage">0%</div>
+                            </div>
+                        </div>
+                        <div class="overview-card">
+                            <div class="card-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="card-content">
+                                <h4>Ausstehend</h4>
+                                <div class="card-value" id="outstanding-value">0 €</div>
+                                <div class="card-subtext" id="outstanding-percentage">0%</div>
+                            </div>
+                        </div>
+                        <div class="overview-card">
+                            <div class="card-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div class="card-content">
+                                <h4>Fortschritt</h4>
+                                <div class="card-value" id="progress-percentage">0%</div>
+                                <div class="card-subtext">Baufortschritt</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabs for different sections -->
+                <div class="execution-tabs">
+                    <button class="execution-tab active" data-tab="contracts">
+                        <i class="fas fa-file-contract"></i> Verträge
+                    </button>
+                    <button class="execution-tab" data-tab="invoices">
+                        <i class="fas fa-file-invoice"></i> Rechnungen
+                    </button>
+                    <button class="execution-tab" data-tab="payments">
+                        <i class="fas fa-credit-card"></i> Zahlungen
+                    </button>
+                    <button class="execution-tab" data-tab="gf-liste">
+                        <i class="fas fa-list-alt"></i> GF-Liste
+                    </button>
+                </div>
+
+                <!-- Contracts Section -->
+                <div class="execution-tab-content active" id="contracts-content">
+                    <div class="contracts-section">
+                        <div class="section-header">
+                            <h3>Verträge verwalten</h3>
+                            <div class="section-controls">
+                                <input type="text" id="contracts-search" placeholder="Suchen..." class="search-input">
+                                <select id="contracts-filter" class="filter-select">
+                                    <option value="">Alle Status</option>
+                                    <option value="Angebot">Angebot</option>
+                                    <option value="Beauftragt">Beauftragt</option>
+                                    <option value="In Ausführung">In Ausführung</option>
+                                    <option value="Abgeschlossen">Abgeschlossen</option>
+                                    <option value="Storniert">Storniert</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="table-container">
+                            <table id="contracts-table" class="calculation-table">
+                                <thead>
+                                    <tr>
+                                        <th>Vertrag Nr.</th>
+                                        <th>Gewerk/Position</th>
+                                        <th>Vertragssumme (€)</th>
+                                        <th>Bezahlt (€)</th>
+                                        <th>Offen (€)</th>
+                                        <th>Status</th>
+                                        <th>Fälligkeit</th>
+                                        <th>Aktionen</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="contracts-tbody">
+                                    <!-- Verträge werden dynamisch geladen -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Invoices Section -->
+                <div class="execution-tab-content" id="invoices-content">
+                    <div class="invoices-section">
+                        <div class="section-header">
+                            <h3>Rechnungen verwalten</h3>
+                            <div class="section-controls">
+                                <input type="text" id="invoices-search" placeholder="Suchen..." class="search-input">
+                                <select id="invoices-filter" class="filter-select">
+                                    <option value="">Alle Status</option>
+                                    <option value="Erhalten">Erhalten</option>
+                                    <option value="Geprüft">Geprüft</option>
+                                    <option value="Freigegeben">Freigegeben</option>
+                                    <option value="Bezahlt">Bezahlt</option>
+                                    <option value="Reklamation">Reklamation</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="table-container">
+                            <table id="invoices-table" class="calculation-table">
+                                <thead>
+                                    <tr>
+                                        <th>Rechnungs-Nr.</th>
+                                        <th>Vertrag</th>
+                                        <th>Betrag (€)</th>
+                                        <th>Skonto (€)</th>
+                                        <th>Netto (€)</th>
+                                        <th>Status</th>
+                                        <th>Eingang</th>
+                                        <th>Fälligkeit</th>
+                                        <th>Aktionen</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="invoices-tbody">
+                                    <!-- Rechnungen werden dynamisch geladen -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payments Section -->
+                <div class="execution-tab-content" id="payments-content">
+                    <div class="payments-section">
+                        <div class="section-header">
+                            <h3>Zahlungsübersicht</h3>
+                            <div class="section-controls">
+                                <input type="month" id="payments-month" class="month-input">
+                                <button id="export-payments-btn" class="btn btn-sm btn-info">
+                                    <i class="fas fa-download"></i> Export
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Payment Timeline -->
+                        <div class="payment-timeline">
+                            <div class="timeline-header">
+                                <h4>Zahlungs-Timeline</h4>
+                            </div>
+                            <div class="timeline-content" id="payment-timeline-content">
+                                <!-- Timeline wird dynamisch geladen -->
+                            </div>
+                        </div>
+
+                        <div class="table-container">
+                            <table id="payments-table" class="calculation-table">
+                                <thead>
+                                    <tr>
+                                        <th>Datum</th>
+                                        <th>Vertrag</th>
+                                        <th>Rechnungs-Nr.</th>
+                                        <th>Betrag (€)</th>
+                                        <th>Typ</th>
+                                        <th>Status</th>
+                                        <th>Bemerkung</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="payments-tbody">
+                                    <!-- Zahlungen werden dynamisch geladen -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GF-Liste Section -->
+                <div class="execution-tab-content" id="gf-liste-content">
+                    <div class="gf-liste-section">
+                        <div class="section-header">
+                            <h3>GF-Liste (Detailbetrachtung)</h3>
+                            <div class="section-controls">
+                                <button id="sync-gf-liste-btn" class="btn btn-sm btn-info">
+                                    <i class="fas fa-sync-alt"></i> Aktualisieren
+                                </button>
+                                <button id="export-gf-liste-btn" class="btn btn-sm btn-secondary">
+                                    <i class="fas fa-file-excel"></i> Export
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Cost Deviation Summary -->
+                        <div class="deviation-summary">
+                            <div class="deviation-card savings">
+                                <h4>Einsparungen</h4>
+                                <div class="deviation-value" id="total-savings">0 €</div>
+                            </div>
+                            <div class="deviation-card overruns">
+                                <h4>Mehrkosten</h4>
+                                <div class="deviation-value" id="total-overruns">0 €</div>
+                            </div>
+                            <div class="deviation-card net">
+                                <h4>Netto-Abweichung</h4>
+                                <div class="deviation-value" id="net-deviation">0 €</div>
+                            </div>
+                        </div>
+
+                        <div class="table-container">
+                            <table id="gf-liste-table" class="calculation-table">
+                                <thead>
+                                    <tr>
+                                        <th>Nr.</th>
+                                        <th>Position</th>
+                                        <th>Kalkulation (€)</th>
+                                        <th>Baukosten (€)</th>
+                                        <th>Verträge (€)</th>
+                                        <th>Abweichung (€)</th>
+                                        <th>Abweichung (%)</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="gf-liste-tbody">
+                                    <!-- GF-Liste wird dynamisch generiert -->
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -326,6 +532,314 @@
                     <h3>Änderungsprotokoll</h3>
                     <div class="changelog-container" id="changelog-container">
                         <!-- Änderungslog wird dynamisch geladen -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistiken Module -->
+            <div id="statistiken-module" class="module">
+                <div class="module-header">
+                    <h2>Projekt-Statistiken & Analytics</h2>
+                    <div class="statistiken-actions">
+                        <select id="stats-project-selector" class="project-selector">
+                            <option value="">Alle Projekte</option>
+                            <!-- Projekte werden dynamisch geladen -->
+                        </select>
+                        <button id="generate-report-btn" class="btn btn-primary">
+                            <i class="fas fa-chart-pie"></i> Bericht generieren
+                        </button>
+                        <button id="export-stats-btn" class="btn btn-secondary">
+                            <i class="fas fa-file-pdf"></i> PDF Export
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Statistics Overview Cards -->
+                <div class="stats-overview">
+                    <div class="stats-cards">
+                        <div class="stats-card">
+                            <div class="card-icon">
+                                <i class="fas fa-building"></i>
+                            </div>
+                            <div class="card-content">
+                                <h4>Projekte gesamt</h4>
+                                <div class="card-value" id="total-projects">0</div>
+                                <div class="card-trend" id="projects-trend">
+                                    <span class="trend-indicator">↗</span>
+                                    <span class="trend-text">+2 diesen Monat</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="stats-card">
+                            <div class="card-icon">
+                                <i class="fas fa-euro-sign"></i>
+                            </div>
+                            <div class="card-content">
+                                <h4>Gesamtvolumen</h4>
+                                <div class="card-value" id="total-volume">0 €</div>
+                                <div class="card-trend" id="volume-trend">
+                                    <span class="trend-indicator">↗</span>
+                                    <span class="trend-text">Ø 2,5M € pro Projekt</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="stats-card">
+                            <div class="card-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div class="card-content">
+                                <h4>Durchschn. Kosten/m²</h4>
+                                <div class="card-value" id="avg-cost-per-sqm">0 €</div>
+                                <div class="card-trend" id="cost-trend">
+                                    <span class="trend-indicator">↗</span>
+                                    <span class="trend-text">BGF-basiert</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="stats-card">
+                            <div class="card-icon">
+                                <i class="fas fa-percentage"></i>
+                            </div>
+                            <div class="card-content">
+                                <h4>Kostenabweichung</h4>
+                                <div class="card-value" id="avg-cost-deviation">0%</div>
+                                <div class="card-trend" id="deviation-trend">
+                                    <span class="trend-indicator">↓</span>
+                                    <span class="trend-text">Im Rahmen</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statistics Tabs -->
+                <div class="stats-tabs">
+                    <button class="stats-tab active" data-tab="overview">
+                        <i class="fas fa-chart-pie"></i> Übersicht
+                    </button>
+                    <button class="stats-tab" data-tab="costs">
+                        <i class="fas fa-coins"></i> Kostenanalyse
+                    </button>
+                    <button class="stats-tab" data-tab="performance">
+                        <i class="fas fa-tachometer-alt"></i> Performance
+                    </button>
+                    <button class="stats-tab" data-tab="comparison">
+                        <i class="fas fa-balance-scale"></i> Vergleich
+                    </button>
+                </div>
+
+                <!-- Overview Tab -->
+                <div class="stats-tab-content active" id="overview-content">
+                    <div class="stats-grid">
+                        <!-- Project Status Distribution -->
+                        <div class="chart-container">
+                            <div class="chart-header">
+                                <h3>Projektverteilung nach Status</h3>
+                                <div class="chart-controls">
+                                    <button class="chart-btn" onclick="statistikenModule.refreshChart('status')">
+                                        <i class="fas fa-sync-alt"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="chart-content">
+                                <canvas id="project-status-chart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Cost Groups Distribution -->
+                        <div class="chart-container">
+                            <div class="chart-header">
+                                <h3>Kostengruppen-Verteilung</h3>
+                                <div class="chart-controls">
+                                    <select id="kg-chart-project" class="chart-select">
+                                        <option value="">Durchschnitt aller Projekte</option>
+                                        <!-- Projekte werden dynamisch geladen -->
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="chart-content">
+                                <canvas id="cost-groups-chart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Timeline Chart -->
+                        <div class="chart-container full-width">
+                            <div class="chart-header">
+                                <h3>Projekt-Timeline</h3>
+                                <div class="chart-controls">
+                                    <select id="timeline-view" class="chart-select">
+                                        <option value="year">Jahresansicht</option>
+                                        <option value="quarter">Quartalsansicht</option>
+                                        <option value="month">Monatsansicht</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="chart-content">
+                                <canvas id="project-timeline-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cost Analysis Tab -->
+                <div class="stats-tab-content" id="costs-content">
+                    <div class="cost-analysis">
+                        <!-- Cost Benchmarks -->
+                        <div class="benchmark-section">
+                            <h3>Kostenbenchmarks</h3>
+                            <div class="benchmark-grid">
+                                <div class="benchmark-card">
+                                    <h4>KG 300 (Baukonstruktion)</h4>
+                                    <div class="benchmark-value">1.250 €/m²</div>
+                                    <div class="benchmark-range">Range: 950 - 1.650 €/m²</div>
+                                </div>
+                                <div class="benchmark-card">
+                                    <h4>KG 400 (Technische Anlagen)</h4>
+                                    <div class="benchmark-value">420 €/m²</div>
+                                    <div class="benchmark-range">Range: 280 - 580 €/m²</div>
+                                </div>
+                                <div class="benchmark-card">
+                                    <h4>KG 700 (Baunebenkosten)</h4>
+                                    <div class="benchmark-value">15%</div>
+                                    <div class="benchmark-range">Range: 12% - 18%</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Cost Deviation Analysis -->
+                        <div class="chart-container">
+                            <div class="chart-header">
+                                <h3>Kostenabweichungen nach Gewerken</h3>
+                                <div class="chart-controls">
+                                    <select id="deviation-project" class="chart-select">
+                                        <option value="">Alle Projekte</option>
+                                        <!-- Projekte werden dynamisch geladen -->
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="chart-content">
+                                <canvas id="cost-deviation-chart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Cost per m² Comparison -->
+                        <div class="chart-container">
+                            <div class="chart-header">
+                                <h3>Kosten pro m² Vergleich</h3>
+                                <div class="chart-controls">
+                                    <button class="chart-btn" onclick="statistikenModule.addProjectToComparison()">
+                                        <i class="fas fa-plus"></i> Projekt hinzufügen
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="chart-content">
+                                <canvas id="cost-per-sqm-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Performance Tab -->
+                <div class="stats-tab-content" id="performance-content">
+                    <div class="performance-analysis">
+                        <!-- KPIs -->
+                        <div class="kpi-section">
+                            <h3>Key Performance Indicators</h3>
+                            <div class="kpi-grid">
+                                <div class="kpi-card">
+                                    <div class="kpi-label">Terminabweichung</div>
+                                    <div class="kpi-value">+5%</div>
+                                    <div class="kpi-indicator positive">Im Rahmen</div>
+                                </div>
+                                <div class="kpi-card">
+                                    <div class="kpi-label">Kostenabweichung</div>
+                                    <div class="kpi-value">-2,3%</div>
+                                    <div class="kpi-indicator negative">Einsparung</div>
+                                </div>
+                                <div class="kpi-card">
+                                    <div class="kpi-label">Qualitätsindex</div>
+                                    <div class="kpi-value">94%</div>
+                                    <div class="kpi-indicator positive">Sehr gut</div>
+                                </div>
+                                <div class="kpi-card">
+                                    <div class="kpi-label">Projekteffizienz</div>
+                                    <div class="kpi-value">87%</div>
+                                    <div class="kpi-indicator positive">Gut</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Performance Trends -->
+                        <div class="chart-container">
+                            <div class="chart-header">
+                                <h3>Performance-Trends</h3>
+                                <div class="chart-controls">
+                                    <select id="performance-metric" class="chart-select">
+                                        <option value="cost">Kostenentwicklung</option>
+                                        <option value="schedule">Terminentwicklung</option>
+                                        <option value="quality">Qualitätsentwicklung</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="chart-content">
+                                <canvas id="performance-trend-chart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Risk Analysis -->
+                        <div class="risk-analysis">
+                            <h3>Risikoanalyse</h3>
+                            <div class="risk-matrix" id="risk-matrix">
+                                <!-- Risk matrix wird dynamisch generiert -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Comparison Tab -->
+                <div class="stats-tab-content" id="comparison-content">
+                    <div class="comparison-analysis">
+                        <div class="comparison-controls">
+                            <h3>Projektvergleich</h3>
+                            <div class="comparison-selectors">
+                                <select id="compare-project-1" class="comparison-select">
+                                    <option value="">Projekt 1 auswählen</option>
+                                    <!-- Projekte werden dynamisch geladen -->
+                                </select>
+                                <div class="vs-indicator">VS</div>
+                                <select id="compare-project-2" class="comparison-select">
+                                    <option value="">Projekt 2 auswählen</option>
+                                    <!-- Projekte werden dynamisch geladen -->
+                                </select>
+                                <button id="start-comparison-btn" class="btn btn-primary">
+                                    <i class="fas fa-balance-scale"></i> Vergleichen
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Comparison Results -->
+                        <div class="comparison-results" id="comparison-results">
+                            <div class="comparison-grid">
+                                <div class="comparison-card">
+                                    <h4>Projektdaten</h4>
+                                    <div class="comparison-table" id="basic-comparison">
+                                        <!-- Vergleichstabelle wird dynamisch generiert -->
+                                    </div>
+                                </div>
+                                <div class="comparison-card">
+                                    <h4>Kostenvergleich</h4>
+                                    <div class="chart-content">
+                                        <canvas id="comparison-cost-chart"></canvas>
+                                    </div>
+                                </div>
+                                <div class="comparison-card">
+                                    <h4>Kennzahlen</h4>
+                                    <div class="comparison-table" id="metrics-comparison">
+                                        <!-- Kennzahlen-Vergleich wird dynamisch generiert -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -404,7 +918,9 @@
     <script src="js/baukosten.js"></script>
     <script src="js/liquiditaet.js"></script>
     <script src="js/ausfuehrung.js"></script>
+    <script src="js/verlauf.js"></script>
     <script src="js/historie.js"></script>
+    <script src="js/statistiken.js"></script>
     <script src="js/debug.js"></script>
     
     <script>
@@ -451,6 +967,11 @@
                             if (window.HistorieModule) {
                                 window.historieModule = new HistorieModule();
                                 console.log('✓ HistorieModule');
+                            }
+                            
+                            if (window.StatistikenModule) {
+                                window.statistikenModule = new StatistikenModule();
+                                console.log('✓ StatistikenModule');
                             }
                             
                             console.log('Alle Module geladen');

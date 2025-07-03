@@ -33,13 +33,27 @@ class KalkulationModule {
                 addBtn.addEventListener('click', () => this.addCustomKostengruppe());
             }
 
-            // Kennzahlen Inputs
+            // Kennzahlen Inputs with number formatting
             ['bgf-input', 'bri-input', 'wfl-input', 'grundstuecksflaeche-input', 'we-input'].forEach(id => {
                 const input = Utils.findElement(`#${id}`);
                 if (input) {
-                    input.addEventListener('input', (e) => {
+                    // Format number on blur
+                    input.addEventListener('blur', (e) => {
+                        const value = parseGermanNumber(e.target.value) || 0;
+                        if (value > 0) {
+                            e.target.value = formatNumberWithThousands(value, id === 'we-input' ? 0 : 2);
+                        }
+                        
                         const fieldName = id.replace('-input', '').replace('grundstuecksflaeche', 'grundstuecksflaeche');
-                        this.updateKennzahl(fieldName, parseFloat(e.target.value) || 0);
+                        this.updateKennzahl(fieldName, value);
+                    });
+
+                    // Allow only numbers, dots, and commas during input
+                    input.addEventListener('input', (e) => {
+                        let value = e.target.value;
+                        // Remove all non-numeric characters except dots and commas
+                        value = value.replace(/[^0-9.,]/g, '');
+                        e.target.value = value;
                     });
                 }
             });
@@ -49,6 +63,9 @@ class KalkulationModule {
             if (applyBtn) {
                 applyBtn.addEventListener('click', () => this.applyReferenceCalculation());
             }
+
+            // Add formatting for dynamically created input fields
+            this.setupDynamicNumberFormatting();
         } catch (error) {
             Utils.handleError(error, 'Setting up Kalkulation Event Listeners');
         }
@@ -305,11 +322,10 @@ class KalkulationModule {
                     ${toggleIcon}${isSubgroup ? '&nbsp;&nbsp;&nbsp;' : ''}${definition.name}
                 </td>
                 <td class="kg-betrag">
-                    <input type="number" 
+                    <input type="text" 
                            class="kg-betrag-input" 
-                           value="${betrag}" 
-                           step="0.01"
-                           min="0"
+                           value="${betrag > 0 ? formatNumberWithThousands(betrag, 0) : ''}" 
+                           placeholder="0"
                            data-kg="${kg}">
                 </td>
                 <td class="kg-ratio-bgf">
@@ -350,8 +366,13 @@ class KalkulationModule {
             const hinweiseInput = row.querySelector('.kg-hinweise-input');
 
             if (betragInput) {
-                betragInput.addEventListener('input', (e) => {
-                    this.updateKostengruppe(kg, 'betrag', parseFloat(e.target.value) || 0);
+                // Setup number formatting for this input
+                this.setupNumberFormattingForInput(betragInput);
+                
+                // Handle value changes
+                betragInput.addEventListener('blur', (e) => {
+                    const value = parseGermanNumber(e.target.value) || 0;
+                    this.updateKostengruppe(kg, 'betrag', value);
                 });
             }
 
@@ -396,35 +417,45 @@ class KalkulationModule {
     }
 
     updateKostengruppe(kg, field, value) {
-        if (!this.currentProject) return;
-
         try {
+            if (!this.currentProject) return;
+
+            // Initialize kalkulation object if not exists
+            if (!this.currentProject.kalkulation) {
+                this.currentProject.kalkulation = {};
+            }
+
+            // Initialize KG object if not exists
             if (!this.currentProject.kalkulation[kg]) {
-                this.currentProject.kalkulation[kg] = { name: '', betrag: 0, hinweise: '' };
+                this.currentProject.kalkulation[kg] = {
+                    name: '',
+                    betrag: 0,
+                    hinweise: ''
+                };
             }
 
+            // Parse value correctly based on field type
             if (field === 'betrag') {
-                value = Utils.validateNumber(value);
-            } else if (field === 'hinweise') {
-                value = Utils.validateString(value, 0, 500);
+                // Parse German-formatted number
+                value = parseGermanNumber(value);
             }
 
+            // Update the value
             this.currentProject.kalkulation[kg][field] = value;
-            window.app.saveData(false);
-            window.app.addHistoryEntry(this.currentProject.id, 'Kostengruppe aktualisiert', { kg, field, value });
 
-            // Update calculations
+            // Recalculate everything
             this.calculateKennzahlenRatios();
             this.calculateTotals();
 
-            // Auto-update Liquiditätsplanung wenn Beträge geändert werden
-            if (field === 'betrag' && window.liquiditaetModule && window.liquiditaetModule.currentProject === this.currentProject) {
-                this.debounceUtils.debounce(() => {
-                    this.refreshLiquiditaetsplanung();
-                }, 1000, 'liquiditaetUpdate');
-            }
+            // Auto-save
+            window.app.saveData(false);
+
+            // Refresh liquiditätsplanung if exists
+            this.refreshLiquiditaetsplanung();
+            
+            console.log(`Updated KG ${kg}.${field} = ${value}`);
         } catch (error) {
-            Utils.handleError(error, `Updating Kostengruppe: ${kg}`);
+            Utils.handleError(error, `Updating Kostengruppe ${kg}.${field}`);
         }
     }
 
@@ -1107,6 +1138,50 @@ class KalkulationModule {
         } catch (error) {
             Utils.handleError(error, `Toggling Kostengruppen Group: ${kg}`);
         }
+    }
+
+    setupDynamicNumberFormatting() {
+        // Setup observer for dynamically added input fields
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                mutation.addedNodes.forEach((node) => {
+                    if (node.nodeType === Node.ELEMENT_NODE) {
+                        const inputs = node.querySelectorAll ? 
+                            node.querySelectorAll('.kg-betrag-input') : 
+                            (node.classList && node.classList.contains('kg-betrag-input') ? [node] : []);
+                        
+                        inputs.forEach(input => this.setupNumberFormattingForInput(input));
+                    }
+                });
+            });
+        });
+
+        const tbody = Utils.findElement('#kg-tbody');
+        if (tbody) {
+            observer.observe(tbody, { childList: true, subtree: true });
+        }
+    }
+
+    setupNumberFormattingForInput(input) {
+        if (input.hasAttribute('data-formatted')) return; // Already setup
+        
+        input.setAttribute('data-formatted', 'true');
+        
+        // Format on blur
+        input.addEventListener('blur', (e) => {
+            const value = parseGermanNumber(e.target.value) || 0;
+            if (value > 0) {
+                e.target.value = formatNumberWithThousands(value, 0);
+            }
+        });
+
+        // Clean input during typing
+        input.addEventListener('input', (e) => {
+            let value = e.target.value;
+            // Remove all non-numeric characters except dots and commas
+            value = value.replace(/[^0-9.,]/g, '');
+            e.target.value = value;
+        });
     }
 }
 

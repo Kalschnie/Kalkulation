@@ -88,6 +88,34 @@ class Utils {
         }).format(number || 0);
     }
 
+    // New function for formatting numbers with thousands separators (German style)
+    static formatNumberWithThousands(number, decimals = 0, locale = 'de-DE') {
+        return new Intl.NumberFormat(locale, {
+            minimumFractionDigits: decimals,
+            maximumFractionDigits: decimals,
+            useGrouping: true
+        }).format(number || 0);
+    }
+
+    // Function to format input values as user types
+    static formatInputNumber(input) {
+        if (!input) return;
+        
+        const value = parseFloat(input.value.replace(/\./g, '').replace(',', '.')) || 0;
+        if (value > 0) {
+            input.value = this.formatNumberWithThousands(value, 0).replace(/[€\s]/g, '');
+        }
+    }
+
+    // Function to parse German formatted numbers back to float
+    static parseGermanNumber(germanNumber) {
+        if (typeof germanNumber !== 'string') return parseFloat(germanNumber) || 0;
+        
+        // Remove thousands separators (dots) and replace decimal comma with dot
+        const normalized = germanNumber.replace(/\./g, '').replace(',', '.');
+        return parseFloat(normalized) || 0;
+    }
+
     static formatDate(date, locale = 'de-DE') {
         return new Date(date).toLocaleDateString(locale);
     }
@@ -560,6 +588,9 @@ window.Utils = Utils;
 // Shortcuts für häufig verwendete Funktionen
 window.formatCurrency = Utils.formatCurrency;
 window.formatNumber = Utils.formatNumber;
+window.formatNumberWithThousands = Utils.formatNumberWithThousands;
+window.formatInputNumber = Utils.formatInputNumber;
+window.parseGermanNumber = Utils.parseGermanNumber;
 window.showNotification = Utils.showNotification.bind(Utils);
 window.createElement = Utils.createElement;
 window.validateNumber = Utils.validateNumber;

@@ -1,18 +1,20 @@
 /**
- * Ausführung & Bauabrechnung Module
- * Verwaltung von Verträgen, Rechnungen und detaillierter Kostenbetrachtung
+ * Ausführung & Bauabrechnung Module (Enhanced Version)
+ * Verwaltung von Verträgen, Rechnungen, Zahlungen und detaillierter Kostenbetrachtung
  */
 
 class AusfuehrungModule {
     constructor() {
         this.currentProject = null;
         this.debounceUtils = new Utils();
+        this.activeTab = 'contracts';
         this.init();
     }
 
     init() {
         try {
             this.setupEventListeners();
+            this.setupTabNavigation();
         } catch (error) {
             Utils.handleError(error, 'Ausfuehrung Module Initialization');
         }
@@ -20,13 +22,105 @@ class AusfuehrungModule {
 
     setupEventListeners() {
         try {
-            // Add Contract Button
-            const addBtn = Utils.findElement('#add-contract-btn');
-            if (addBtn) {
-                addBtn.addEventListener('click', () => this.addContract());
+            // Main action buttons
+            const addContractBtn = Utils.findElement('#add-contract-btn');
+            if (addContractBtn) {
+                addContractBtn.addEventListener('click', () => this.addContract());
             }
+
+            const addInvoiceBtn = Utils.findElement('#add-invoice-btn');
+            if (addInvoiceBtn) {
+                addInvoiceBtn.addEventListener('click', () => this.addInvoice());
+            }
+
+            const exportBtn = Utils.findElement('#export-execution-btn');
+            if (exportBtn) {
+                exportBtn.addEventListener('click', () => this.exportExecution());
+            }
+
+            // Search and filter functionality
+            this.setupSearchAndFilter();
+
         } catch (error) {
             Utils.handleError(error, 'Setting up Ausfuehrung Event Listeners');
+        }
+    }
+
+    setupTabNavigation() {
+        const tabs = Utils.findAllElements('.execution-tab');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                const targetTab = e.target.dataset.tab;
+                this.switchTab(targetTab);
+            });
+        });
+    }
+
+    setupSearchAndFilter() {
+        // Contracts search and filter
+        const contractsSearch = Utils.findElement('#contracts-search');
+        if (contractsSearch) {
+            contractsSearch.addEventListener('input', (e) => {
+                this.debounceUtils.debounce(() => {
+                    this.filterContracts(e.target.value);
+                }, 300, 'contracts-search');
+            });
+        }
+
+        const contractsFilter = Utils.findElement('#contracts-filter');
+        if (contractsFilter) {
+            contractsFilter.addEventListener('change', (e) => {
+                this.filterContractsByStatus(e.target.value);
+            });
+        }
+
+        // Similar setup for invoices and payments...
+    }
+
+    switchTab(tabName) {
+        try {
+            // Update active tab
+            this.activeTab = tabName;
+
+            // Update tab buttons
+            Utils.findAllElements('.execution-tab').forEach(tab => {
+                tab.classList.remove('active');
+                if (tab.dataset.tab === tabName) {
+                    tab.classList.add('active');
+                }
+            });
+
+            // Update tab content
+            Utils.findAllElements('.execution-tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+
+            const activeContent = Utils.findElement(`#${tabName}-content`);
+            if (activeContent) {
+                activeContent.classList.add('active');
+            }
+
+            // Load content for the active tab
+            this.loadTabContent(tabName);
+        } catch (error) {
+            Utils.handleError(error, `Switching to tab: ${tabName}`);
+        }
+    }
+
+    loadTabContent(tabName) {
+        switch (tabName) {
+            case 'contracts':
+                this.renderContracts();
+                break;
+            case 'invoices':
+                this.renderInvoices();
+                break;
+            case 'payments':
+                this.renderPayments();
+                break;
+            case 'gf-liste':
+                this.renderGFListe();
+                break;
         }
     }
 
@@ -34,12 +128,39 @@ class AusfuehrungModule {
         try {
             this.currentProject = project;
             if (project) {
-                this.renderContracts();
-                this.renderGFListe();
+                this.updateOverviewCards();
+                this.loadTabContent(this.activeTab);
                 showNotification(`Ausführung für "${project.name}" geladen`, 'success');
             }
         } catch (error) {
             Utils.handleError(error, 'Loading Project in Ausfuehrung');
+        }
+    }
+
+    updateOverviewCards() {
+        if (!this.currentProject) return;
+
+        try {
+            const contracts = this.currentProject.vertraege || [];
+            const invoices = this.currentProject.rechnungen || [];
+            
+            // Calculate totals
+            const contractsTotal = Utils.sum(contracts, 'vertragssumme');
+            const paidTotal = Utils.sum(contracts, 'bezahlt');
+            const outstandingTotal = contractsTotal - paidTotal;
+            const progress = contractsTotal > 0 ? (paidTotal / contractsTotal) * 100 : 0;
+
+            // Update cards
+            Utils.findElement('#contracts-count').textContent = contracts.length;
+            Utils.findElement('#contracts-value').textContent = formatCurrency(contractsTotal);
+            Utils.findElement('#paid-value').textContent = formatCurrency(paidTotal);
+            Utils.findElement('#paid-percentage').textContent = `${Math.round(progress)}%`;
+            Utils.findElement('#outstanding-value').textContent = formatCurrency(outstandingTotal);
+            Utils.findElement('#outstanding-percentage').textContent = `${Math.round(100 - progress)}%`;
+            Utils.findElement('#progress-percentage').textContent = `${Math.round(progress)}%`;
+
+        } catch (error) {
+            Utils.handleError(error, 'Updating Overview Cards');
         }
     }
 
@@ -78,6 +199,7 @@ class AusfuehrungModule {
             const bezahlt = Utils.validateNumber(vertrag.bezahlt);
             const vertragssumme = Utils.validateNumber(vertrag.vertragssumme);
             const offen = vertragssumme - bezahlt;
+            const faelligkeit = vertrag.faelligkeit || '';
             
             row.innerHTML = `
                 <td class="contract-nr">
@@ -98,22 +220,20 @@ class AusfuehrungModule {
                     </select>
                 </td>
                 <td class="contract-summe">
-                    <input type="number" 
+                    <input type="text" 
                            class="contract-input currency-input" 
-                           value="${vertragssumme}" 
-                           step="0.01"
-                           min="0"
+                           value="${vertragssumme > 0 ? formatNumberWithThousands(vertragssumme, 0) : ''}" 
                            data-field="vertragssumme"
-                           data-index="${index}">
+                           data-index="${index}"
+                           placeholder="0">
                 </td>
                 <td class="contract-bezahlt">
-                    <input type="number" 
+                    <input type="text" 
                            class="contract-input currency-input" 
-                           value="${bezahlt}" 
-                           step="0.01"
-                           min="0"
+                           value="${bezahlt > 0 ? formatNumberWithThousands(bezahlt, 0) : ''}" 
                            data-field="bezahlt"
-                           data-index="${index}">
+                           data-index="${index}"
+                           placeholder="0">
                 </td>
                 <td class="contract-offen ${offen > 0 ? 'text-warning' : 'text-success'}">
                     <strong>${formatCurrency(offen)}</strong>
@@ -129,12 +249,22 @@ class AusfuehrungModule {
                         <option value="Storniert" ${vertrag.status === 'Storniert' ? 'selected' : ''}>Storniert</option>
                     </select>
                 </td>
+                <td class="contract-due">
+                    <input type="date" 
+                           class="contract-input date-input" 
+                           value="${faelligkeit}" 
+                           data-field="faelligkeit"
+                           data-index="${index}">
+                </td>
                 <td class="contract-actions">
                     <button class="btn-icon" onclick="ausfuehrungModule.editContract(${index})" title="Details bearbeiten">
                         <i class="fas fa-edit"></i>
                     </button>
                     <button class="btn-icon" onclick="ausfuehrungModule.addPayment(${index})" title="Zahlung hinzufügen">
                         <i class="fas fa-plus-circle"></i>
+                    </button>
+                    <button class="btn-icon" onclick="ausfuehrungModule.viewPayments(${index})" title="Zahlungen anzeigen">
+                        <i class="fas fa-eye"></i>
                     </button>
                     <button class="btn-icon" onclick="ausfuehrungModule.deleteContract(${index})" title="Löschen">
                         <i class="fas fa-trash"></i>
@@ -147,14 +277,27 @@ class AusfuehrungModule {
                 input.addEventListener('input', (e) => {
                     const index = parseInt(e.target.dataset.index);
                     const field = e.target.dataset.field;
-                    const value = e.target.type === 'number' ? 
-                        Utils.validateNumber(e.target.value) : 
-                        Utils.validateString(e.target.value);
+                    let value = e.target.value;
+                    
+                    // Parse value based on field type
+                    if (['vertragssumme', 'bezahlt'].includes(field)) {
+                        value = parseGermanNumber(value);
+                    }
                     
                     this.debounceUtils.debounce(() => {
                         this.updateContract(index, field, value);
                     }, 300, `contract-${index}-${field}`);
                 });
+
+                // Setup number formatting for currency inputs
+                if (input.classList.contains('currency-input')) {
+                    input.addEventListener('blur', (e) => {
+                        const value = parseGermanNumber(e.target.value) || 0;
+                        if (value > 0) {
+                            e.target.value = formatNumberWithThousands(value, 0);
+                        }
+                    });
+                }
             });
 
             return row;
@@ -355,7 +498,9 @@ class AusfuehrungModule {
 
             this.currentProject.vertraege[index] = updatedContract;
             window.app.saveData(false);
-            window.app.addHistoryEntry(this.currentProject.id, 'Vertrag bearbeitet', { vertrag: updatedContract.vertragNr });
+            window.app.addHistoryEntry(this.currentProject.id, 'Vertrag bearbeitet', {
+                vertragNr: updatedContract.vertragNr
+            });
 
             this.renderContracts();
             Utils.closeModal(modal);
@@ -383,7 +528,7 @@ class AusfuehrungModule {
                         handler: () => Utils.closeModal(modal)
                     },
                     {
-                        text: 'Hinzufügen',
+                        text: 'Zahlung hinzufügen',
                         className: 'btn-primary',
                         handler: () => this.savePayment(modal, index)
                     }
@@ -395,30 +540,32 @@ class AusfuehrungModule {
     }
 
     createPaymentForm(vertrag) {
-        const offen = (vertrag.vertragssumme || 0) - (vertrag.bezahlt || 0);
+        const offenBetrag = Utils.validateNumber(vertrag.vertragssumme) - Utils.validateNumber(vertrag.bezahlt);
         
         return `
             <form id="payment-form">
                 <div class="form-group">
-                    <label>Betrag (€):</label>
-                    <input type="number" name="betrag" value="${Math.max(0, offen)}" step="0.01" min="0" max="${offen}" required>
-                    <small class="form-text">Offener Betrag: ${formatCurrency(offen)}</small>
+                    <label>Zahlungsbetrag (€):</label>
+                    <input type="number" name="betrag" value="${offenBetrag > 0 ? offenBetrag : 0}" 
+                           step="0.01" min="0" max="${offenBetrag}" required>
+                    <small class="form-hint">Offener Betrag: ${formatCurrency(offenBetrag)}</small>
                 </div>
                 <div class="form-group">
-                    <label>Datum:</label>
+                    <label>Zahlungsdatum:</label>
                     <input type="date" name="datum" value="${new Date().toISOString().split('T')[0]}" required>
                 </div>
                 <div class="form-group">
-                    <label>Typ:</label>
-                    <select name="typ">
-                        <option value="Abschlagszahlung">Abschlagszahlung</option>
+                    <label>Zahlungstyp:</label>
+                    <select name="typ" required>
+                        <option value="Abschlag">Abschlag</option>
+                        <option value="Teilzahlung">Teilzahlung</option>
                         <option value="Schlusszahlung">Schlusszahlung</option>
-                        <option value="Vorauszahlung">Vorauszahlung</option>
+                        <option value="Skonto">Skonto</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Beschreibung:</label>
-                    <textarea name="beschreibung" rows="2" maxlength="200" placeholder="Optionale Beschreibung"></textarea>
+                    <label>Bemerkung:</label>
+                    <textarea name="bemerkung" rows="3" maxlength="200"></textarea>
                 </div>
             </form>
         `;
@@ -429,41 +576,130 @@ class AusfuehrungModule {
             const form = modal.querySelector('#payment-form');
             const formData = Utils.serializeForm(form);
 
-            const betrag = Utils.validateNumber(formData.betrag);
-            if (betrag <= 0) {
-                showNotification('Betrag muss größer als 0 sein', 'warning');
+            if (!formData.betrag || formData.betrag <= 0) {
+                showNotification('Bitte geben Sie einen gültigen Zahlungsbetrag ein', 'warning');
                 return;
             }
 
             const vertrag = this.currentProject.vertraege[index];
+            const zahlung = {
+                id: Date.now(),
+                betrag: Utils.validateNumber(formData.betrag),
+                datum: formData.datum,
+                typ: formData.typ,
+                bemerkung: Utils.validateString(formData.bemerkung, 0, 200),
+                created: new Date().toISOString()
+            };
+
             if (!vertrag.zahlungen) {
                 vertrag.zahlungen = [];
             }
 
-            const payment = {
-                id: Utils.generateId('payment_'),
-                betrag: betrag,
-                datum: formData.datum,
-                typ: Utils.validateString(formData.typ, 0, 50),
-                beschreibung: Utils.validateString(formData.beschreibung, 0, 200),
-                created: new Date().toISOString()
-            };
-
-            vertrag.zahlungen.push(payment);
-            vertrag.bezahlt = (vertrag.bezahlt || 0) + betrag;
+            vertrag.zahlungen.push(zahlung);
+            vertrag.bezahlt = Utils.validateNumber(vertrag.bezahlt) + zahlung.betrag;
 
             window.app.saveData(false);
             window.app.addHistoryEntry(this.currentProject.id, 'Zahlung hinzugefügt', {
-                vertrag: vertrag.vertragNr,
-                betrag: betrag
+                vertragNr: vertrag.vertragNr,
+                betrag: zahlung.betrag,
+                typ: zahlung.typ
             });
 
             this.renderContracts();
+            this.updateOverviewCards();
             Utils.closeModal(modal);
             showNotification('Zahlung erfolgreich hinzugefügt', 'success');
         } catch (error) {
             Utils.handleError(error, 'Saving Payment');
         }
+    }
+
+    viewPayments(index) {
+        try {
+            const vertrag = this.currentProject?.vertraege?.[index];
+            if (!vertrag) {
+                showNotification('Vertrag nicht gefunden', 'error');
+                return;
+            }
+
+            const modal = Utils.createModal({
+                title: `Zahlungen für Vertrag "${vertrag.vertragNr}"`,
+                content: this.createPaymentsView(vertrag),
+                size: 'large',
+                buttons: [
+                    {
+                        text: 'Schließen',
+                        className: 'btn-secondary',
+                        handler: () => Utils.closeModal(modal)
+                    }
+                ]
+            });
+        } catch (error) {
+            Utils.handleError(error, `Viewing payments for contract ${index}`);
+        }
+    }
+
+    createPaymentsView(vertrag) {
+        const zahlungen = vertrag.zahlungen || [];
+        let paymentsHTML = '';
+
+        if (zahlungen.length === 0) {
+            paymentsHTML = '<p class="text-muted">Noch keine Zahlungen vorhanden.</p>';
+        } else {
+            paymentsHTML = `
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Datum</th>
+                                <th>Betrag</th>
+                                <th>Typ</th>
+                                <th>Bemerkung</th>
+                                <th>Aktionen</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${zahlungen.map((zahlung, index) => `
+                                <tr>
+                                    <td>${new Date(zahlung.datum).toLocaleDateString('de-DE')}</td>
+                                    <td>${formatCurrency(zahlung.betrag)}</td>
+                                    <td><span class="badge">${zahlung.typ}</span></td>
+                                    <td>${zahlung.bemerkung || '-'}</td>
+                                    <td>
+                                        <button class="btn-icon" onclick="ausfuehrungModule.deletePayment('${vertrag.vertragNr}', ${index})" title="Löschen">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        const totalPaid = zahlungen.reduce((sum, z) => sum + Utils.validateNumber(z.betrag), 0);
+        const offenBetrag = Utils.validateNumber(vertrag.vertragssumme) - totalPaid;
+
+        return `
+            <div class="payments-overview">
+                <div class="payment-summary">
+                    <div class="summary-card">
+                        <h4>Vertragssumme</h4>
+                        <div class="summary-value">${formatCurrency(vertrag.vertragssumme)}</div>
+                    </div>
+                    <div class="summary-card">
+                        <h4>Bezahlt</h4>
+                        <div class="summary-value text-success">${formatCurrency(totalPaid)}</div>
+                    </div>
+                    <div class="summary-card">
+                        <h4>Offen</h4>
+                        <div class="summary-value ${offenBetrag > 0 ? 'text-warning' : 'text-success'}">${formatCurrency(offenBetrag)}</div>
+                    </div>
+                </div>
+                ${paymentsHTML}
+            </div>
+        `;
     }
 
     deleteContract(index) {
@@ -474,16 +710,18 @@ class AusfuehrungModule {
                 return;
             }
 
-            const confirmed = confirm(`Möchten Sie den Vertrag "${vertrag.vertragNr}" wirklich löschen?\n\nDiese Aktion kann nicht rückgängig gemacht werden.`);
-            if (!confirmed) return;
+            if (!confirm(`Möchten Sie den Vertrag "${vertrag.vertragNr}" wirklich löschen?`)) {
+                return;
+            }
 
-            const deletedVertragNr = vertrag.vertragNr;
             this.currentProject.vertraege.splice(index, 1);
-            
             window.app.saveData(false);
-            window.app.addHistoryEntry(this.currentProject.id, 'Vertrag gelöscht', { vertrag: deletedVertragNr });
+            window.app.addHistoryEntry(this.currentProject.id, 'Vertrag gelöscht', {
+                vertragNr: vertrag.vertragNr
+            });
 
             this.renderContracts();
+            this.updateOverviewCards();
             showNotification('Vertrag erfolgreich gelöscht', 'success');
         } catch (error) {
             Utils.handleError(error, `Deleting Contract at index ${index}`);
@@ -492,29 +730,22 @@ class AusfuehrungModule {
 
     addContractsSummary(tbody) {
         try {
-            if (!this.currentProject?.vertraege?.length) return;
+            const contracts = this.currentProject?.vertraege || [];
+            const totals = contracts.reduce((acc, vertrag) => {
+                acc.vertragssumme += Utils.validateNumber(vertrag.vertragssumme);
+                acc.bezahlt += Utils.validateNumber(vertrag.bezahlt);
+                return acc;
+            }, { vertragssumme: 0, bezahlt: 0 });
 
-            const summary = Utils.sum(this.currentProject.vertraege, vertrag => ({
-                totalSum: Utils.validateNumber(vertrag.vertragssumme),
-                totalPaid: Utils.validateNumber(vertrag.bezahlt)
-            }), (acc, curr) => ({
-                totalSum: acc.totalSum + curr.totalSum,
-                totalPaid: acc.totalPaid + curr.totalPaid
-            }), { totalSum: 0, totalPaid: 0 });
+            const offen = totals.vertragssumme - totals.bezahlt;
 
-            const totalOpen = summary.totalSum - summary.totalPaid;
-
-            const summaryRow = Utils.createElement('tr', 'totals-row');
+            const summaryRow = Utils.createElement('tr', 'contracts-summary');
             summaryRow.innerHTML = `
-                <td><strong>GESAMT</strong></td>
-                <td><strong>Alle Verträge</strong></td>
-                <td><strong>${formatCurrency(summary.totalSum)}</strong></td>
-                <td><strong>${formatCurrency(summary.totalPaid)}</strong></td>
-                <td class="${totalOpen > 0 ? 'text-warning' : 'text-success'}">
-                    <strong>${formatCurrency(totalOpen)}</strong>
-                </td>
-                <td></td>
-                <td></td>
+                <td colspan="2"><strong>Summe:</strong></td>
+                <td><strong>${formatCurrency(totals.vertragssumme)}</strong></td>
+                <td><strong>${formatCurrency(totals.bezahlt)}</strong></td>
+                <td><strong class="${offen > 0 ? 'text-warning' : 'text-success'}">${formatCurrency(offen)}</strong></td>
+                <td colspan="3"></td>
             `;
 
             tbody.appendChild(summaryRow);
@@ -524,27 +755,39 @@ class AusfuehrungModule {
     }
 
     updateContractsSummary() {
-        try {
-            const tbody = Utils.findElement('#contracts-tbody');
-            if (!tbody) return;
-
-            // Remove existing summary row
-            const existingSummary = tbody.querySelector('.totals-row');
-            if (existingSummary) {
-                existingSummary.remove();
-            }
-
-            // Add new summary
-            this.addContractsSummary(tbody);
-        } catch (error) {
-            Utils.handleError(error, 'Updating Contracts Summary');
+        const summaryRow = Utils.findElement('.contracts-summary');
+        if (summaryRow) {
+            summaryRow.remove();
         }
+
+        const tbody = Utils.findElement('#contracts-tbody');
+        if (tbody) {
+            this.addContractsSummary(tbody);
+        }
+
+        this.updateOverviewCards();
+    }
+
+    renderInvoices() {
+        // Implementation for rendering invoices
+        const tbody = Utils.findElement('#invoices-tbody');
+        if (!tbody) return;
+
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">Rechnungsmodul in Entwicklung</td></tr>';
+    }
+
+    renderPayments() {
+        // Implementation for rendering payments overview
+        const tbody = Utils.findElement('#payments-tbody');
+        if (!tbody) return;
+
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">Zahlungsübersicht in Entwicklung</td></tr>';
     }
 
     renderGFListe() {
-        try {
-            if (!this.currentProject) return;
+        if (!this.currentProject) return;
 
+        try {
             const tbody = Utils.findElement('#gf-liste-tbody');
             if (!tbody) return;
 
@@ -552,162 +795,206 @@ class AusfuehrungModule {
 
             const comparison = this.createKalkulationComparison();
             
-            comparison.forEach(item => {
-                const row = this.createGFListeRow(item);
+            comparison.forEach((item, index) => {
+                const row = this.createGFListeRow(item, index);
                 tbody.appendChild(row);
             });
 
             this.addGFListeTotals(tbody, comparison);
+            this.updateDeviationSummary(comparison);
         } catch (error) {
             Utils.handleError(error, 'Rendering GF Liste');
         }
     }
 
     createKalkulationComparison() {
+        const kalkulation = this.currentProject?.kalkulation || {};
+        const baukosten = this.currentProject?.baukosten || [];
+        const vertraege = this.currentProject?.vertraege || [];
+
         const comparison = [];
-        
-        // Get data from different modules
-        const kalkulation = this.currentProject.kalkulation || {};
-        const baukosten = this.currentProject.baukosten || [];
-        const vertraege = this.currentProject.vertraege || [];
 
-        // Create a comprehensive comparison
-        const gewerkMap = new Map();
-
-        // Add Kalkulation data (KG 300-400)
+        // Process Kalkulation items
         Object.entries(kalkulation).forEach(([kg, data]) => {
-            if (kg.startsWith('3') || kg.startsWith('4')) {
-                gewerkMap.set(kg, {
-                    nr: kg,
-                    name: data.name,
-                    kalkulation: Utils.validateNumber(data.betrag),
-                    baukosten: 0,
-                    vertraege: 0,
-                    status: 'Kalkulation'
-                });
-            }
+            const kalkulationBetrag = Utils.validateNumber(data.betrag);
+            
+            // Find corresponding Baukosten
+            const baukostenGewerk = baukosten.find(b => b.nr === kg);
+            const baukostenBetrag = baukostenGewerk ? 
+                Utils.validateNumber(baukostenGewerk.vergabe || baukostenGewerk.kalkulation) : 0;
+
+            // Find corresponding Verträge
+            const vertrageBetrag = vertraege
+                .filter(v => v.gewerk === baukostenGewerk?.name)
+                .reduce((sum, v) => sum + Utils.validateNumber(v.vertragssumme), 0);
+
+            // Use Verträge if available, otherwise Baukosten
+            const actualBetrag = vertrageBetrag > 0 ? vertrageBetrag : baukostenBetrag;
+            const abweichung = actualBetrag - kalkulationBetrag;
+            const abweichungPercent = kalkulationBetrag > 0 ? (abweichung / kalkulationBetrag) * 100 : 0;
+
+            comparison.push({
+                nr: kg,
+                position: data.name || `Kostengruppe ${kg}`,
+                kalkulation: kalkulationBetrag,
+                baukosten: baukostenBetrag,
+                vertraege: vertrageBetrag,
+                actual: actualBetrag,
+                abweichung,
+                abweichungPercent,
+                status: this.getGewerkStatus(baukostenGewerk, abweichungPercent)
+            });
         });
 
-        // Add Baukosten data
-        baukosten.forEach(gewerk => {
-            const key = gewerk.name;
-            const existing = Array.from(gewerkMap.values()).find(item => item.name === gewerk.name);
-            
-            if (existing) {
-                existing.baukosten = Utils.validateNumber(gewerk.vergabe || gewerk.kalkulation);
-            } else {
-                gewerkMap.set(key, {
-                    nr: gewerk.nr,
-                    name: gewerk.name,
-                    kalkulation: 0,
-                    baukosten: Utils.validateNumber(gewerk.vergabe || gewerk.kalkulation),
-                    vertraege: 0,
-                    status: 'Baukosten'
-                });
-            }
-        });
-
-        // Add Verträge data
-        vertraege.forEach(vertrag => {
-            const existing = Array.from(gewerkMap.values()).find(item => item.name === vertrag.gewerk);
-            
-            if (existing) {
-                existing.vertraege += Utils.validateNumber(vertrag.vertragssumme);
-            } else if (vertrag.gewerk) {
-                gewerkMap.set(vertrag.gewerk, {
-                    nr: 'V',
-                    name: vertrag.gewerk,
-                    kalkulation: 0,
-                    baukosten: 0,
-                    vertraege: Utils.validateNumber(vertrag.vertragssumme),
-                    status: 'Vertrag'
-                });
-            }
-        });
-
-        // Convert to array and calculate deviations
-        Array.from(gewerkMap.values()).forEach(item => {
-            const referenceValue = item.baukosten || item.kalkulation || item.vertraege;
-            const finalValue = item.vertraege || item.baukosten || item.kalkulation;
-            
-            item.abweichung = finalValue - referenceValue;
-            item.abweichungPercent = referenceValue > 0 ? (item.abweichung / referenceValue) * 100 : 0;
-            item.gewerkStatus = this.getGewerkStatus(item, item.abweichungPercent);
-            
-            comparison.push(item);
-        });
-
-        return comparison.sort((a, b) => a.name.localeCompare(b.name));
+        return comparison.sort((a, b) => a.nr.localeCompare(b.nr));
     }
 
     getGewerkStatus(gewerk, abweichungPercent) {
-        if (gewerk.vertraege > 0) {
-            if (abweichungPercent <= -5) return { status: 'Einsparung', class: 'text-success' };
-            if (abweichungPercent >= 10) return { status: 'Überschreitung', class: 'text-danger' };
-            return { status: 'Im Rahmen', class: 'text-primary' };
-        }
-        if (gewerk.baukosten > 0) return { status: 'Kalkuliert', class: 'text-info' };
-        return { status: 'Offen', class: 'text-warning' };
+        if (!gewerk) return 'Nicht vergeben';
+        if (gewerk.status) return gewerk.status;
+        
+        if (Math.abs(abweichungPercent) <= 5) return 'Im Rahmen';
+        if (abweichungPercent > 5) return 'Über Budget';
+        return 'Unter Budget';
     }
 
-    createGFListeRow(item) {
+    createGFListeRow(item, index) {
         const row = Utils.createElement('tr');
-        
+        row.dataset.index = index;
+
+        const abweichungClass = item.abweichung > 0 ? 'text-danger' : 
+                               item.abweichung < 0 ? 'text-success' : '';
+
         row.innerHTML = `
-            <td class="gf-nr">${item.nr}</td>
-            <td class="gf-name">${item.name}</td>
-            <td class="gf-kalkulation">${formatCurrency(item.kalkulation)}</td>
-            <td class="gf-baukosten">${formatCurrency(item.baukosten)}</td>
-            <td class="gf-vertraege">${formatCurrency(item.vertraege)}</td>
-            <td class="gf-abweichung ${item.abweichung >= 0 ? 'text-danger' : 'text-success'}">
-                ${formatCurrency(item.abweichung)}
+            <td>${item.nr}</td>
+            <td>${item.position}</td>
+            <td class="text-right">${formatCurrency(item.kalkulation)}</td>
+            <td class="text-right">${formatCurrency(item.baukosten)}</td>
+            <td class="text-right">${formatCurrency(item.vertraege)}</td>
+            <td class="text-right ${abweichungClass}">
+                <strong>${formatCurrency(item.abweichung)}</strong>
             </td>
-            <td class="gf-abweichung-percent ${item.abweichungPercent >= 10 ? 'text-danger' : item.abweichungPercent <= -5 ? 'text-success' : ''}">
-                ${formatNumber(item.abweichungPercent, 1)}%
+            <td class="text-right ${abweichungClass}">
+                <strong>${item.abweichungPercent.toFixed(1)}%</strong>
             </td>
-            <td class="gf-status ${item.gewerkStatus.class}">
-                <span class="badge">${item.gewerkStatus.status}</span>
+            <td>
+                <span class="badge ${this.getStatusClass(item.status)}">${item.status}</span>
             </td>
         `;
 
         return row;
     }
 
-    addGFListeTotals(tbody, comparison) {
-        try {
-            const totals = comparison.reduce((acc, item) => ({
-                kalkulation: acc.kalkulation + item.kalkulation,
-                baukosten: acc.baukosten + item.baukosten,
-                vertraege: acc.vertraege + item.vertraege,
-                abweichung: acc.abweichung + item.abweichung
-            }), { kalkulation: 0, baukosten: 0, vertraege: 0, abweichung: 0 });
-
-            const referenceTotal = totals.baukosten || totals.kalkulation;
-            const abweichungPercent = referenceTotal > 0 ? (totals.abweichung / referenceTotal) * 100 : 0;
-
-            const totalRow = Utils.createElement('tr', 'totals-row');
-            totalRow.innerHTML = `
-                <td><strong>GESAMT</strong></td>
-                <td><strong>Alle Gewerke</strong></td>
-                <td><strong>${formatCurrency(totals.kalkulation)}</strong></td>
-                <td><strong>${formatCurrency(totals.baukosten)}</strong></td>
-                <td><strong>${formatCurrency(totals.vertraege)}</strong></td>
-                <td class="${totals.abweichung >= 0 ? 'text-danger' : 'text-success'}">
-                    <strong>${formatCurrency(totals.abweichung)}</strong>
-                </td>
-                <td class="${abweichungPercent >= 10 ? 'text-danger' : abweichungPercent <= -5 ? 'text-success' : ''}">
-                    <strong>${formatNumber(abweichungPercent, 1)}%</strong>
-                </td>
-                <td></td>
-            `;
-
-            tbody.appendChild(totalRow);
-        } catch (error) {
-            Utils.handleError(error, 'Adding GF Liste Totals');
+    getStatusClass(status) {
+        switch (status) {
+            case 'Im Rahmen': return 'badge-success';
+            case 'Über Budget': return 'badge-danger';
+            case 'Unter Budget': return 'badge-info';
+            case 'Nicht vergeben': return 'badge-warning';
+            default: return 'badge-secondary';
         }
     }
 
-    exportContracts() {
+    addGFListeTotals(tbody, comparison) {
+        const totals = comparison.reduce((acc, item) => {
+            acc.kalkulation += item.kalkulation;
+            acc.baukosten += item.baukosten;
+            acc.vertraege += item.vertraege;
+            acc.actual += item.actual;
+            acc.abweichung += item.abweichung;
+            return acc;
+        }, { kalkulation: 0, baukosten: 0, vertraege: 0, actual: 0, abweichung: 0 });
+
+        const abweichungPercent = totals.kalkulation > 0 ? 
+            (totals.abweichung / totals.kalkulation) * 100 : 0;
+
+        const summaryRow = Utils.createElement('tr', 'gf-summary');
+        summaryRow.innerHTML = `
+            <td colspan="2"><strong>SUMME:</strong></td>
+            <td class="text-right"><strong>${formatCurrency(totals.kalkulation)}</strong></td>
+            <td class="text-right"><strong>${formatCurrency(totals.baukosten)}</strong></td>
+            <td class="text-right"><strong>${formatCurrency(totals.vertraege)}</strong></td>
+            <td class="text-right ${totals.abweichung > 0 ? 'text-danger' : 'text-success'}">
+                <strong>${formatCurrency(totals.abweichung)}</strong>
+            </td>
+            <td class="text-right ${totals.abweichung > 0 ? 'text-danger' : 'text-success'}">
+                <strong>${abweichungPercent.toFixed(1)}%</strong>
+            </td>
+            <td></td>
+        `;
+
+        tbody.appendChild(summaryRow);
+    }
+
+    updateDeviationSummary(comparison) {
+        try {
+            const savings = comparison
+                .filter(item => item.abweichung < 0)
+                .reduce((sum, item) => sum + Math.abs(item.abweichung), 0);
+
+            const overruns = comparison
+                .filter(item => item.abweichung > 0)
+                .reduce((sum, item) => sum + item.abweichung, 0);
+
+            const netDeviation = overruns - savings;
+
+            Utils.findElement('#total-savings').textContent = formatCurrency(savings);
+            Utils.findElement('#total-overruns').textContent = formatCurrency(overruns);
+            Utils.findElement('#net-deviation').textContent = formatCurrency(netDeviation);
+        } catch (error) {
+            Utils.handleError(error, 'Updating Deviation Summary');
+        }
+    }
+
+    filterContracts(searchTerm) {
+        // Implementation for filtering contracts
+        this.applyFilter('contracts', searchTerm);
+    }
+
+    filterContractsByStatus(status) {
+        // Implementation for filtering by status
+        this.applyStatusFilter('contracts', status);
+    }
+
+    applyFilter(type, searchTerm) {
+        try {
+            const tbody = Utils.findElement(`#${type}-tbody`);
+            if (!tbody) return;
+
+            const rows = tbody.querySelectorAll('tr:not(.summary):not(.total)');
+            
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                const matches = !searchTerm || text.includes(searchTerm.toLowerCase());
+                row.style.display = matches ? '' : 'none';
+            });
+        } catch (error) {
+            Utils.handleError(error, `Applying filter for ${type}`);
+        }
+    }
+
+    applyStatusFilter(type, status) {
+        try {
+            const tbody = Utils.findElement(`#${type}-tbody`);
+            if (!tbody) return;
+
+            const rows = tbody.querySelectorAll('tr:not(.summary):not(.total)');
+            
+            rows.forEach(row => {
+                const statusCell = row.querySelector('.contract-status select');
+                const matches = !status || (statusCell && statusCell.value === status);
+                row.style.display = matches ? '' : 'none';
+            });
+        } catch (error) {
+            Utils.handleError(error, `Applying status filter for ${type}`);
+        }
+    }
+
+    addInvoice() {
+        showNotification('Rechnungsmodul in Entwicklung', 'info');
+    }
+
+    exportExecution() {
         try {
             if (!this.currentProject) {
                 showNotification('Kein Projekt ausgewählt', 'warning');
@@ -715,93 +1002,53 @@ class AusfuehrungModule {
             }
 
             const data = {
-                projektName: this.currentProject.name,
-                vertraege: this.currentProject.vertraege || [],
-                zusammenfassung: this.getContractSummary(),
-                exportiert: new Date().toISOString()
+                project: this.currentProject.name,
+                exported: new Date().toISOString(),
+                contracts: this.getContractSummary(),
+                gfListe: this.createKalkulationComparison(),
+                statistics: this.getProjectStatistics()
             };
 
-            const filename = Utils.generateFilename(this.currentProject.name, 'vertraege');
+            const filename = Utils.generateFilename(this.currentProject.name, 'ausfuehrung', 'json');
             Utils.downloadJSON(data, filename);
-            showNotification('Verträge erfolgreich exportiert', 'success');
+            
+            showNotification('Ausführungsdaten erfolgreich exportiert', 'success');
         } catch (error) {
-            Utils.handleError(error, 'Exporting Contracts');
+            Utils.handleError(error, 'Exporting Execution Data');
         }
     }
 
     getContractSummary() {
-        if (!this.currentProject?.vertraege?.length) return {};
-
-        return this.currentProject.vertraege.reduce((acc, vertrag) => {
-            const summe = Utils.validateNumber(vertrag.vertragssumme);
-            const bezahlt = Utils.validateNumber(vertrag.bezahlt);
-            
-            acc.anzahl++;
-            acc.gesamtsumme += summe;
-            acc.bezahlt += bezahlt;
-            acc.offen += (summe - bezahlt);
-            
-            acc.nachStatus[vertrag.status] = (acc.nachStatus[vertrag.status] || 0) + 1;
-            
-            return acc;
-        }, {
-            anzahl: 0,
-            gesamtsumme: 0,
-            bezahlt: 0,
-            offen: 0,
-            nachStatus: {}
-        });
-    }
-
-    exportGFListe() {
-        try {
-            if (!this.currentProject) {
-                showNotification('Kein Projekt ausgewählt', 'warning');
-                return;
-            }
-
-            const comparison = this.createKalkulationComparison();
-            const data = {
-                projektName: this.currentProject.name,
-                gfListe: comparison,
-                zusammenfassung: this.getProjectStatistics(),
-                exportiert: new Date().toISOString()
-            };
-
-            const filename = Utils.generateFilename(this.currentProject.name, 'gf_liste');
-            Utils.downloadJSON(data, filename);
-            showNotification('GF-Liste erfolgreich exportiert', 'success');
-        } catch (error) {
-            Utils.handleError(error, 'Exporting GF Liste');
-        }
+        const contracts = this.currentProject?.vertraege || [];
+        return {
+            total: contracts.length,
+            totalValue: contracts.reduce((sum, c) => sum + Utils.validateNumber(c.vertragssumme), 0),
+            totalPaid: contracts.reduce((sum, c) => sum + Utils.validateNumber(c.bezahlt), 0),
+            byStatus: contracts.reduce((acc, c) => {
+                acc[c.status] = (acc[c.status] || 0) + 1;
+                return acc;
+            }, {})
+        };
     }
 
     getProjectStatistics() {
-        try {
-            const comparison = this.createKalkulationComparison();
-            
-            const stats = {
-                anzahlGewerke: comparison.length,
-                kalkulationGesamt: Utils.sum(comparison, item => item.kalkulation),
-                baukostenGesamt: Utils.sum(comparison, item => item.baukosten),
-                vertraegeGesamt: Utils.sum(comparison, item => item.vertraege),
-                abweichungGesamt: Utils.sum(comparison, item => item.abweichung),
-                status: {
-                    abgeschlossen: comparison.filter(item => item.gewerkStatus.status === 'Im Rahmen').length,
-                    ueberschreitung: comparison.filter(item => item.gewerkStatus.status === 'Überschreitung').length,
-                    einsparung: comparison.filter(item => item.gewerkStatus.status === 'Einsparung').length,
-                    offen: comparison.filter(item => item.gewerkStatus.status === 'Offen').length
-                }
-            };
+        const comparison = this.createKalkulationComparison();
+        const totals = comparison.reduce((acc, item) => {
+            acc.kalkulation += item.kalkulation;
+            acc.actual += item.actual;
+            return acc;
+        }, { kalkulation: 0, actual: 0 });
 
-            const referenceTotal = stats.baukostenGesamt || stats.kalkulationGesamt;
-            stats.abweichungPercent = referenceTotal > 0 ? (stats.abweichungGesamt / referenceTotal) * 100 : 0;
-
-            return stats;
-        } catch (error) {
-            Utils.handleError(error, 'Getting Project Statistics');
-            return {};
-        }
+        return {
+            totalBudget: totals.kalkulation,
+            totalActual: totals.actual,
+            deviation: totals.actual - totals.kalkulation,
+            deviationPercent: totals.kalkulation > 0 ? 
+                ((totals.actual - totals.kalkulation) / totals.kalkulation) * 100 : 0,
+            itemsCount: comparison.length,
+            itemsOverBudget: comparison.filter(item => item.abweichungPercent > 5).length,
+            itemsUnderBudget: comparison.filter(item => item.abweichungPercent < -5).length
+        };
     }
 }
 
