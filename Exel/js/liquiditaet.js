@@ -26,6 +26,12 @@ class LiquiditaetModule {
                 generateBtn.addEventListener('click', () => this.generateLiquiditaetsplanung());
             }
 
+            // Sync with Kalkulation Button
+            const syncBtn = Utils.findElement('#sync-liquiditaet-btn');
+            if (syncBtn) {
+                syncBtn.addEventListener('click', () => this.syncWithKalkulation());
+            }
+
             // Export Liquiditätsplanung Button
             const exportBtn = Utils.findElement('#export-liquiditaet-btn');
             if (exportBtn) {
@@ -1092,6 +1098,26 @@ class LiquiditaetModule {
         // Viewport-Info
         console.log('Viewport Breite:', window.innerWidth, 'px');
         console.log('Mobile Ansicht:', window.innerWidth <= 768 ? 'JA' : 'NEIN');
+    }
+
+    syncWithKalkulation() {
+        try {
+            if (!this.currentProject) {
+                showNotification('Bitte wählen Sie zuerst ein Projekt aus', 'warning');
+                return;
+            }
+
+            if (!this.currentProject.liquiditaetsplanung) {
+                showNotification('Keine Liquiditätsplanung vorhanden. Bitte zuerst generieren.', 'warning');
+                return;
+            }
+
+            // Re-generate with current kalkulation data
+            this.generateLiquiditaetsplanung();
+            showNotification('Liquiditätsplanung erfolgreich mit Kalkulation synchronisiert', 'success');
+        } catch (error) {
+            Utils.handleError(error, 'Syncing with Kalkulation');
+        }
     }
 }
 

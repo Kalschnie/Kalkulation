@@ -1062,6 +1062,13 @@ class KalkulationModule {
 
             this.renderKostengruppen();
             showNotification(`Kostengruppe ${kg} erfolgreich gelöscht`, 'success');
+
+            // Auto-update Liquiditätsplanung wenn vorhanden
+            if (window.liquiditaetModule && this.currentProject?.liquiditaetsplanung) {
+                this.debounceUtils.debounce(() => {
+                    this.refreshLiquiditaetsplanung();
+                }, 500, 'liquiditaetUpdateDelete');
+            }
         } catch (error) {
             Utils.handleError(error, `Deleting Kostengruppe: ${kg}`);
         }
